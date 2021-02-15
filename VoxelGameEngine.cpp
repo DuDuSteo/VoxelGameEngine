@@ -15,9 +15,9 @@
 #define APPLICATION_NAME "VoxelGameEngine"
 
 //Timings
-size_t currentFrame = 0;
-size_t deltaTime = 0;
-size_t lastFrame = 0;
+float currentFrame = 0;
+float deltaTime = 0;
+float lastFrame = 0;
 
 
 //temporal
@@ -115,7 +115,7 @@ private:
 		}
 	}
 	void drawFrame() {
-		currentFrame = (size_t)glfwGetTime();
+		currentFrame = (float)glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
@@ -128,8 +128,8 @@ private:
 		glm::mat4 model = glm::mat4(1.f);
 
 		processInput();
-		std::cout << "x: " << cubePosition.x << " y: " << cubePosition.z << std::endl;
-
+		//std::cout << "x: " << cubePosition.x << " y: " << cubePosition.z << std::endl;
+		std::cout << deltaTime << std::endl;
 		model = glm::translate(model, cubePosition);
 
 		shader.use();
@@ -156,17 +156,17 @@ private:
 	void processInput()
 	{
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			cubePosition.z -= 0.01f;
+			cubePosition.z -= 1.f * deltaTime;
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			cubePosition.z += 0.01f;
+			cubePosition.z += 1.f * deltaTime;
 		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			cubePosition.x -= 0.01f;
+			cubePosition.x -= 1.f * deltaTime;
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			cubePosition.x += 0.01f;
+			cubePosition.x += 1.f * deltaTime;
 		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-			cubePosition.y += 0.01f;
+			cubePosition.y += 1.f * deltaTime;
 		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-			cubePosition.y -= 0.01f;
+			cubePosition.y -= 1.f * deltaTime;
 
 		if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
 				wireVisible = !wireVisible;		
