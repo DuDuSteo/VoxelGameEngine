@@ -19,8 +19,6 @@ float currentFrame = 0;
 float deltaTime = 0;
 float lastFrame = 0;
 
-
-
 //temporal
 bool wireVisible = false;
 glm::vec3 cubePosition = glm::vec3(0.f, 0.f, -5.f);
