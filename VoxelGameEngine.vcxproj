@@ -78,8 +78,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\code\VoxelGameEngine\includes;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\code\VoxelGameEngine\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\palek\Documents\Visual Studio 2019\Includes;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\palek\Documents\Visual Studio 2019\Libraries\lib-vc2019;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
