@@ -120,6 +120,9 @@ private:
 		}
 
 		glfwMakeContextCurrent(window);
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+		glfwSetCursorPos(window, SCR_WIDTH / 2, SCR_HEIGHT / 2);
 
 		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 			std::cout << "Failed to initialize GLAD" << std::endl;
@@ -256,18 +259,44 @@ private:
 	}
 
 	void processInput() {
+		//--------------------------------ESC TO QUIT--------------------------------
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+			glfwSetWindowShouldClose(window, GLFW_TRUE);
+
+		//--------------------------------CAMERA MOVEMENT--------------------------------
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			cubePosition.z -= 1.f * deltaTime;
+			camera.ProcessKeyboard(Camera_Movement::FORWARD, deltaTime);
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			cubePosition.z += 1.f * deltaTime;
+			camera.ProcessKeyboard(Camera_Movement::BACKWARD, deltaTime);
 		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			cubePosition.x -= 1.f * deltaTime;
+			camera.ProcessKeyboard(Camera_Movement::LEFT, deltaTime);
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			cubePosition.x += 1.f * deltaTime;
+			camera.ProcessKeyboard(Camera_Movement::RIGHT, deltaTime);
 		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-			cubePosition.y += 1.f * deltaTime;
+			camera.ProcessKeyboard(Camera_Movement::UP, deltaTime);
 		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-			cubePosition.y -= 1.f * deltaTime;	
+			camera.ProcessKeyboard(Camera_Movement::DOWN, deltaTime);
+
+		//--------------------------------ALT TO FREE CAMERA--------------------------------
+		static bool hiddenCursor = true;
+		if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
+			if (!hiddenCursor) {
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+				hiddenCursor = true;
+			}
+		}
+		if (!(glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)) {
+			double xpos, ypos;
+			glfwGetCursorPos(window, &xpos, &ypos);
+			camera.ProcessMouseMovement(xpos, ypos, hiddenCursor);
+
+			if (hiddenCursor) {
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+				hiddenCursor = false;
+
+			}
+			
+		}
 	}
 
 	void materialEditorGUI() {
