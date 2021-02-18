@@ -161,7 +161,7 @@ private:
 		// TEMPORAL STUFF HERE
 		camera.Position = glm::vec3(0.f, 0.f, 5.f);
 		memset(frameTime, 0, sizeof(frameTime));
-		cubeMaterial = material::BRONZE;
+		cubeMaterial = material::EMERALD;
 
 	}
 	void mainLoop() {
