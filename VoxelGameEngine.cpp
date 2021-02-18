@@ -14,11 +14,13 @@
 
 #include "shader.h"
 #include "camera.h"
+#include "material.hpp"
 
 #define SCR_WIDTH 1280
 #define SCR_HEIGHT 720
 #define APPLICATION_NAME "VoxelGameEngine"
 #define FRAME_TIME_SIZE 60 * 20
+
 //Timings
 float currentFrame = 0;
 float deltaTime = 0;
@@ -28,26 +30,24 @@ float frameTime[FRAME_TIME_SIZE];
 //temporal
 bool wireVisible = false;
 glm::vec3 cubePosition = glm::vec3(0.f, 0.f, 0.f);
+material::Material cubeMaterial;
 
 struct Vertex {
 	glm::vec3 pos;
 	glm::vec3 normals;
-	//glm::vec2 texcoord;
 };
-
-struct Material {
-	glm::vec3 ambient;
-	glm::vec3 diffuse;
-	glm::vec3 specular;
-	float shininess;
-} cubeMaterial;
 
 struct Light {
 	glm::vec3 direction;
 	glm::vec3 ambient;
 	glm::vec3 diffuse;
 	glm::vec3 specular;
-} light;
+} light = {
+	{0.f, -1.f, -1.f},
+	{1.f, 1.f, 1.f},
+	{1.f, 1.f, 1.f},
+	{1.f, 1.f, 1.f}
+};
 
 const std::vector<Vertex> vertices = {
 	{{1.00000, 1.00000, -1.000000},{0.000, 1.000, 0.0000}},		//0
@@ -161,6 +161,7 @@ private:
 		// TEMPORAL STUFF HERE
 		camera.Position = glm::vec3(0.f, 0.f, 5.f);
 		memset(frameTime, 0, sizeof(frameTime));
+		cubeMaterial = material::BRONZE;
 
 	}
 	void mainLoop() {
@@ -200,7 +201,7 @@ private:
 		shader.setVec3("material.ambient", cubeMaterial.ambient);
 		shader.setVec3("material.diffuse", cubeMaterial.diffuse);
 		shader.setVec3("material.specular", cubeMaterial.specular);
-		shader.setFloat("material.shininess", cubeMaterial.shininess);
+		shader.setFloat("material.shininess", (cubeMaterial.shininess*128));
 
 		shader.setVec3("viewPos", camera.Position);
 
@@ -225,46 +226,25 @@ private:
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-		bool my_tool_active = true;
 
-		ImGui::Begin("Editor", &my_tool_active, ImGuiWindowFlags_MenuBar);
-		if (ImGui::BeginMenuBar())
-		{
-			if (ImGui::BeginMenu("File"))
-			{
-				if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
-				if (ImGui::MenuItem("Save", "Ctrl+S")) { /* Do stuff */ }
-				ImGui::EndMenu();
-			}
-			ImGui::EndMenuBar();
-		}
-		
+		materialEditorGUI();
+		debugInfoGUI();
 
+		ImGui::Begin("Rest");
 		ImGui::Text("Cube");
 		ImGui::SliderFloat3("cubePosition", (float*)&cubePosition, -2.f, 2.f);
-
-		ImGui::Text("Cube Material");
-		ImGui::SliderFloat3("Ambient", (float*)&cubeMaterial.ambient, 0.f, 1.f);
-		ImGui::SliderFloat3("Diffuse", (float*)&cubeMaterial.diffuse, 0.f, 1.f);
-		ImGui::SliderFloat3("Specular", (float*)&cubeMaterial.specular, 0.f, 1.f);
-		ImGui::SliderFloat("Shininess", &cubeMaterial.shininess, 0.f, 64.f);
+		
+		
 
 		ImGui::Text("Light");
 		ImGui::SliderFloat3("Direction", (float*)&light.direction, -1.f, 1.f);
 		ImGui::SliderFloat3("Light Ambient", (float*)&light.ambient, 0.f, 1.f);
 		ImGui::SliderFloat3("Light Diffuse", (float*)&light.diffuse, 0.f, 1.f);
 		ImGui::SliderFloat3("Light Specular", (float*)&light.specular, 0.f, 1.f);
-		
-		ImGui::End();
-
-		ImGui::Begin("Debug Info");
-		if (ImGui::Button("WireFrame mode"))
-			wireVisible ^= true;
-		ImGui::PlotHistogram("", frameTime, IM_ARRAYSIZE(frameTime), 0, NULL, 0.0f, 16.f, ImVec2(200, 100));
 		ImGui::End();
 
 		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());	
 	}
 
 	void cleanup() {
@@ -274,8 +254,8 @@ private:
 		glfwDestroyWindow(window);
 		glfwTerminate();
 	}
-	void processInput()
-	{
+
+	void processInput() {
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 			cubePosition.z -= 1.f * deltaTime;
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -290,6 +270,35 @@ private:
 			cubePosition.y -= 1.f * deltaTime;	
 	}
 
+	void materialEditorGUI() {
+		//--------------------------------CUBE EDITOR--------------------------------
+		static char stringBuffer[15] = { 0 };
+
+		ImGui::Begin("Material Editor");
+		
+		ImGui::Text("Material");
+		ImGui::InputText("Name", stringBuffer, IM_ARRAYSIZE(stringBuffer));
+		
+		if (ImGui::Button("Save"))
+			material::SaveMaterial(cubeMaterial, stringBuffer);
+		ImGui::SameLine();
+		if(ImGui::Button("Load"))
+			material::LoadMaterial(cubeMaterial, stringBuffer);
+		ImGui::SliderFloat3("Ambient", (float*)&cubeMaterial.ambient, 0.f, 1.f);
+		ImGui::SliderFloat3("Diffuse", (float*)&cubeMaterial.diffuse, 0.f, 1.f);
+		ImGui::SliderFloat3("Specular", (float*)&cubeMaterial.specular, 0.f, 1.f);
+		ImGui::SliderFloat("Shininess", &cubeMaterial.shininess, 0.f, 1.f);
+		ImGui::End();
+	}
+
+	void debugInfoGUI() {
+		//--------------------------------DEBUG--------------------------------
+		ImGui::Begin("Debug Info");
+		if (ImGui::Button("WireFrame mode"))
+			wireVisible ^= true;
+		ImGui::PlotHistogram("", frameTime, IM_ARRAYSIZE(frameTime), 0, NULL, 0.0f, 16.f, ImVec2(200, 80));
+		ImGui::End();
+	}
 };
 
 int main() {
