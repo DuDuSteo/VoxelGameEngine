@@ -7,6 +7,10 @@
 #include <iostream>
 #include <vector>
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 #include "shader.h"
 #include "camera.h"
 
@@ -85,6 +89,17 @@ private:
 			std::cout << "Failed to initialize GLAD" << std::endl;
 			glfwTerminate();
 		}
+
+		//Imgui init
+
+		IMGUI_CHECKVERSION();
+
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO();
+
+		ImGui_ImplGlfw_InitForOpenGL(window, true);
+		ImGui_ImplOpenGL3_Init("#version 330 core");
+		ImGui::StyleColorsDark();
 	}
 
 	void initOpenGL() {
@@ -110,6 +125,7 @@ private:
 		while (!glfwWindowShouldClose(window)) {
 			glfwPollEvents();
 			drawFrame();
+			drawGUI();
 			glfwSwapBuffers(window);
 		}
 	}
@@ -117,7 +133,6 @@ private:
 		currentFrame = (float)glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-
 		
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -145,6 +160,19 @@ private:
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
 	}
+
+	void drawGUI() {
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		ImGui::Begin("Hello ImGui");
+		ImGui::End();
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	}
+
 	void cleanup() {
 		glDeleteBuffers(1, &VBO);
 		glDeleteBuffers(1, &EBO);
