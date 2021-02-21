@@ -51,6 +51,12 @@
     <ClCompile Include="imgui\imgui_tables.cpp">
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="scene_graph.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="material.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shader.h">
@@ -59,7 +65,10 @@
     <ClInclude Include="camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="material.hpp">
+    <ClInclude Include="scene_graph.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

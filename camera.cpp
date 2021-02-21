@@ -40,6 +40,24 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
         Position -= Up * velocity;
 }
 
+void Camera::ProcessKeyboard(float xpos, float ypos, float deltaTime, bool firstMouse) {
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+    }
+
+    float velocity = deltaTime * MovementSpeed;
+
+    float xoffset = lastX - xpos;
+    float yoffset = ypos - lastY;
+
+    lastX = xpos;
+    lastY = ypos;
+
+    Position += Right * xoffset * velocity;
+    Position += Up * yoffset * velocity;
+}
+
 void Camera::ProcessMouseMovement(float xpos, float ypos, bool firstMouse, GLboolean constrainPitch)
 {
     if (firstMouse) {
@@ -72,13 +90,10 @@ void Camera::ProcessMouseMovement(float xpos, float ypos, bool firstMouse, GLboo
     updateCameraVectors();
 }
 
-void Camera::ProcessMouseScroll(float yoffset)
-{
-    Zoom -= (float)yoffset;
-    if (Zoom < 10.0f)
-        Zoom = 10.0f;
-    if (Zoom > 120.0f)
-        Zoom = 120.0f;
+void Camera::ProcessMouseScroll(float yoffset, float deltaTime) {
+    float velocity = deltaTime * MovementSpeed * 100.f;
+    Position += Front * yoffset * velocity;
+
 }
 
 void Camera::updateCameraVectors() {

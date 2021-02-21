@@ -14,7 +14,7 @@
 
 #include "shader.h"
 #include "camera.h"
-#include "material.hpp"
+#include "scene_graph.h"
 
 #define SCR_WIDTH 1280
 #define SCR_HEIGHT 720
@@ -28,9 +28,10 @@ float lastFrame = 0;
 float frameTime[FRAME_TIME_SIZE];
 
 //temporal
+double mouseYOffset = 0;
 bool wireVisible = false;
 glm::vec3 cubePosition = glm::vec3(0.f, 0.f, 0.f);
-material::Material cubeMaterial;
+Material cubeMaterial;
 
 struct Vertex {
 	glm::vec3 pos;
@@ -43,39 +44,39 @@ struct Light {
 	glm::vec3 diffuse;
 	glm::vec3 specular;
 } light = {
-	{0.f, -1.f, -1.f},
-	{1.f, 1.f, 1.f},
-	{1.f, 1.f, 1.f},
-	{1.f, 1.f, 1.f}
+	{0.f, -1.f, 0.f},
+	{0.2f, 0.2f, 0.2f},
+	{0.5f, 0.5f, 0.5f},
+	{1.0f, 1.0f, 1.0f}
 };
 
 const std::vector<Vertex> vertices = {
-	{{1.00000, 1.00000, -1.000000},{0.000, 1.000, 0.0000}},		//0
-	{{1.00000, -1.00000, -1.000000},{0.000, -1.000, 0.0000}},		//1
-	{{1.00000, 1.00000, 1.000000},{0.000, 1.000, 0.0000}},		//2
-	{{1.00000, -1.00000, 1.000000},{0.000, 0.000, 1.0000}},		//3
-	{{-1.00000, 1.00000, -1.000000},{0.000, 1.000, 0.0000}},		//4
-	{{-1.00000, -1.00000, -1.000000},{-1.000, 0.000, 0.0000}},		//5
-	{{-1.00000, 1.00000, 1.000000},{-1.000, 0.000, 0.0000}},		//6
-	{{-1.00000, -1.00000, 1.000000},{0.000, 0.000, 1.0000}},		//7
+	{{0.50000, 0.50000, -0.500000},{0.000, 1.000, 0.0000}},		//0
+	{{0.50000, -0.50000, -0.500000},{0.000, -1.000, 0.0000}},		//1
+	{{0.50000, 0.50000, 0.500000},{0.000, 1.000, 0.0000}},		//2
+	{{0.50000, -0.50000, 0.500000},{0.000, 0.000, 1.0000}},		//3
+	{{-0.50000, 0.50000, -0.500000},{0.000, 1.000, 0.0000}},		//4
+	{{-0.50000, -0.50000, -0.500000},{-1.000, 0.000, 0.0000}},		//5
+	{{-0.50000, 0.50000, 0.500000},{-1.000, 0.000, 0.0000}},		//6
+	{{-0.50000, -0.50000, 0.500000},{0.000, 0.000, 1.0000}},		//7
 
-	{{1.00000, 1.00000, -1.000000},{1.000, 0.000, 0.0000}},		//0 + 8
-	{{1.00000, -1.00000, -1.000000},{1.000, 0.000, 0.0000}},		//1 + 8
-	{{1.00000, 1.00000, 1.000000},{0.000, 0.000, 1.0000}},		//2 + 8
-	{{1.00000, -1.00000, 1.000000},{1.000, 0.000, 0.0000}},		//3 + 8
-	{{-1.00000, 1.00000, -1.000000},{0.000, 0.000, -1.0000}},		//4 + 8
-	{{-1.00000, -1.00000, -1.000000},{0.000, -1.000, 0.0000}},		//5 + 8
-	{{-1.00000, 1.00000, 1.000000},{0.000, 1.000, 0.0000}},		//6 + 8
-	{{-1.00000, -1.00000, 1.000000},{-1.000, 0.000, 0.0000}},		//7 + 8
+	{{0.50000, 0.50000, -0.500000},{1.000, 0.000, 0.0000}},		//0 + 8
+	{{0.50000, -0.50000, -0.500000},{1.000, 0.000, 0.0000}},		//1 + 8
+	{{0.50000, 0.50000, 0.500000},{0.000, 0.000, 1.0000}},		//2 + 8
+	{{0.50000, -0.50000, 0.500000},{1.000, 0.000, 0.0000}},		//3 + 8
+	{{-0.50000, 0.50000, -0.500000},{0.000, 0.000, -1.0000}},		//4 + 8
+	{{-0.50000, -0.50000, -0.500000},{0.000, -1.000, 0.0000}},		//5 + 8
+	{{-0.50000, 0.50000, 0.500000},{0.000, 1.000, 0.0000}},		//6 + 8
+	{{-0.50000, -0.50000, 0.500000},{-1.000, 0.000, 0.0000}},		//7 + 8
 
-	{{1.00000, 1.00000, -1.000000},{0.000, 0.000, -1.0000}},		//0 + 16
-	{{1.00000, -1.00000, -1.000000},{0.000, 0.000, -1.0000}},		//1 + 16
-	{{1.00000, 1.00000, 1.000000},{1.000, 0.000, 0.0000}},		//2 + 16
-	{{1.00000, -1.00000, 1.000000},{0.000, -1.000, 0.0000}},		//3 + 16
-	{{-1.00000, 1.00000, -1.000000},{-1.000, 0.000, 0.0000}},		//4 + 16
-	{{-1.00000, -1.00000, -1.000000},{0.000, 0.000, -1.0000}},		//5 + 16
-	{{-1.00000, 1.00000, 1.000000},{0.000, 0.000, 1.0000}},		//6 + 16
-	{{-1.00000, -1.00000, 1.000000},{0.000, -1.000, 0.0000}}		//7 + 16
+	{{0.50000, 0.50000, -0.500000},{0.000, 0.000, -1.0000}},		//0 + 16
+	{{0.50000, -0.50000, -0.500000},{0.000, 0.000, -1.0000}},		//1 + 16
+	{{0.50000, 0.50000, 0.500000},{1.000, 0.000, 0.0000}},		//2 + 16
+	{{0.50000, -0.50000, 0.500000},{0.000, -1.000, 0.0000}},		//3 + 16
+	{{-0.50000, 0.50000, -0.500000},{-1.000, 0.000, 0.0000}},		//4 + 16
+	{{-0.50000, -0.50000, -0.500000},{0.000, 0.000, -1.0000}},		//5 + 16
+	{{-0.50000, 0.50000, 0.500000},{0.000, 0.000, 1.0000}},		//6 + 16
+	{{-0.50000, -0.50000, 0.500000},{0.000, -1.000, 0.0000}}		//7 + 16
 };
 
 const std::vector<uint32_t> indices = {
@@ -107,7 +108,8 @@ private:
 	GLFWwindow* window;
 	uint32_t VAO, VBO, EBO;
 	Shader shader;
-	Camera camera;
+	Camera* camera;
+	SceneNode* root;
 
 	void initWindow() {
 		glfwInit();
@@ -120,8 +122,11 @@ private:
 		}
 
 		glfwMakeContextCurrent(window);
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+		//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		glfwSetWindowUserPointer(window, this);
+		glfwSetScrollCallback(window, scroll_callback);
 		glfwSetCursorPos(window, SCR_WIDTH / 2, SCR_HEIGHT / 2);
 
 		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -162,11 +167,16 @@ private:
 		
 		shader.init("basic.vert", "basic.frag");
 		// TEMPORAL STUFF HERE
-		camera.Position = glm::vec3(0.f, 0.f, 5.f);
+		camera = new Camera();
+		camera->Position = glm::vec3(0.f, 0.f, 5.f);
 		memset(frameTime, 0, sizeof(frameTime));
-		cubeMaterial = material::EMERALD;
+		root = new SceneNode("root");
+		SceneNode* t_child = new SceneNode("emerald_cube");
+		t_child->setMaterial("emerald");
+		root->addChild(t_child);
 
 	}
+
 	void mainLoop() {
 		while (!glfwWindowShouldClose(window)) {
 			glfwPollEvents();
@@ -175,6 +185,7 @@ private:
 			glfwSwapBuffers(window);
 		}
 	}
+
 	void drawFrame() {
 		currentFrame = (float)glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
@@ -190,29 +201,27 @@ private:
 		
 
 		glm::mat4 projection = glm::perspective(glm::radians(45.f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.f);
-		glm::mat4 view = camera.GetViewMatrix();
+		glm::mat4 view = camera->GetViewMatrix();
 		glm::mat4 model = glm::mat4(1.f);
 
 		processInput();
 		model = glm::translate(model, cubePosition);
 
 		shader.use();
-		shader.setMat4("projection", projection);
-		shader.setMat4("view", view);
-		shader.setMat4("model", model);
 
-		shader.setVec3("material.ambient", cubeMaterial.ambient);
-		shader.setVec3("material.diffuse", cubeMaterial.diffuse);
-		shader.setVec3("material.specular", cubeMaterial.specular);
-		shader.setFloat("material.shininess", (cubeMaterial.shininess*128));
+		
 
-		shader.setVec3("viewPos", camera.Position);
+		shader.setVec3("viewPos", camera->Position);
 
 		shader.setVec3("light.direction", light.direction);
 		shader.setVec3("light.ambient", light.ambient);
 		shader.setVec3("light.diffuse", light.diffuse);
 		shader.setVec3("light.specular", light.specular);
 
+		shader.setMat4("projection", projection);
+		shader.setMat4("view", view);
+
+		
 		if (wireVisible)
 		{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -220,9 +229,17 @@ private:
 		else
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-		
+		std::vector<SceneNode*> t_children = root->getChildren();
+		for (size_t i = 0; i < t_children.size(); i++) {
 
+			shader.setVec3("material.ambient", t_children[i]->m_material.ambient);
+			shader.setVec3("material.diffuse", t_children[i]->m_material.diffuse);
+			shader.setVec3("material.specular", t_children[i]->m_material.specular);
+			shader.setFloat("material.shininess", (t_children[i]->m_material.shininess * 128));
+
+			shader.setMat4("model", t_children[i]->getMatrix());
+			glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0);
+		}	
 	}
 
 	void drawGUI() {
@@ -232,19 +249,8 @@ private:
 
 		materialEditorGUI();
 		debugInfoGUI();
-
-		ImGui::Begin("Rest");
-		ImGui::Text("Cube");
-		ImGui::SliderFloat3("cubePosition", (float*)&cubePosition, -2.f, 2.f);
-		
-		
-
-		ImGui::Text("Light");
-		ImGui::SliderFloat3("Direction", (float*)&light.direction, -1.f, 1.f);
-		ImGui::SliderFloat3("Light Ambient", (float*)&light.ambient, 0.f, 1.f);
-		ImGui::SliderFloat3("Light Diffuse", (float*)&light.diffuse, 0.f, 1.f);
-		ImGui::SliderFloat3("Light Specular", (float*)&light.specular, 0.f, 1.f);
-		ImGui::End();
+		sceneEditorGUI();
+		lightPropertiesGUI();
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());	
@@ -258,46 +264,7 @@ private:
 		glfwTerminate();
 	}
 
-	void processInput() {
-		//--------------------------------ESC TO QUIT--------------------------------
-		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-			glfwSetWindowShouldClose(window, GLFW_TRUE);
 
-		//--------------------------------CAMERA MOVEMENT--------------------------------
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			camera.ProcessKeyboard(Camera_Movement::FORWARD, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			camera.ProcessKeyboard(Camera_Movement::BACKWARD, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			camera.ProcessKeyboard(Camera_Movement::LEFT, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			camera.ProcessKeyboard(Camera_Movement::RIGHT, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-			camera.ProcessKeyboard(Camera_Movement::UP, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-			camera.ProcessKeyboard(Camera_Movement::DOWN, deltaTime);
-
-		//--------------------------------ALT TO FREE CAMERA--------------------------------
-		static bool hiddenCursor = true;
-		if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
-			if (!hiddenCursor) {
-				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-				hiddenCursor = true;
-			}
-		}
-		if (!(glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)) {
-			double xpos, ypos;
-			glfwGetCursorPos(window, &xpos, &ypos);
-			camera.ProcessMouseMovement(xpos, ypos, hiddenCursor);
-
-			if (hiddenCursor) {
-				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-				hiddenCursor = false;
-
-			}
-			
-		}
-	}
 
 	void materialEditorGUI() {
 		//--------------------------------CUBE EDITOR--------------------------------
@@ -309,10 +276,10 @@ private:
 		ImGui::InputText("Name", stringBuffer, IM_ARRAYSIZE(stringBuffer));
 		
 		if (ImGui::Button("Save"))
-			material::SaveMaterial(cubeMaterial, stringBuffer);
+			saveMaterial(cubeMaterial, stringBuffer);
 		ImGui::SameLine();
 		if(ImGui::Button("Load"))
-			material::LoadMaterial(cubeMaterial, stringBuffer);
+			loadMaterial(cubeMaterial, stringBuffer);
 		ImGui::SliderFloat3("Ambient", (float*)&cubeMaterial.ambient, 0.f, 1.f);
 		ImGui::SliderFloat3("Diffuse", (float*)&cubeMaterial.diffuse, 0.f, 1.f);
 		ImGui::SliderFloat3("Specular", (float*)&cubeMaterial.specular, 0.f, 1.f);
@@ -327,6 +294,141 @@ private:
 			wireVisible ^= true;
 		ImGui::PlotHistogram("", frameTime, IM_ARRAYSIZE(frameTime), 0, NULL, 0.0f, 16.f, ImVec2(200, 80));
 		ImGui::End();
+	}
+
+	void sceneEditorGUI() {
+		ImGui::Begin("Scene Editor");
+			
+		static int selected = 0;
+		static float translation[3] = { 0.f, 0.f, 0.f };
+		static float scale[3] = { 1.f, 1.f, 1.f };
+		static float rotatation[4] = { 0.f, 0.f, 0.f, 1.f };
+		static char objectName[16] = { 0 };
+		static char materialName[16] = { 0 };
+
+		{
+			ImGui::BeginGroup();
+			if (ImGui::BeginChild("Scene", ImVec2(150, 200), true)) {
+				std::vector<SceneNode*> t_children = root->getChildren();
+
+				for (size_t i = 0; i < t_children.size(); i++) {
+					if (ImGui::Selectable(t_children[i]->getName().c_str(), selected == i)) {
+						selected = (int)i;
+						memset(objectName, 0, 16);
+						memset(materialName, 0, 16);
+						for (size_t j = 0; j < t_children[i]->getName().size(); j++)
+							objectName[j] = t_children[i]->getName()[j];
+						for (size_t j = 0; j < t_children[i]->m_material.name.size(); j++)
+							materialName[j] = t_children[i]->m_material.name[j];
+						for (size_t j = 0; j < 3; j++)
+						{
+							translation[j] = t_children[i]->getTranslationf()[j];
+							scale[j] = t_children[i]->getScalef()[j];
+							rotatation[j] = t_children[i]->getRotationf()[j];
+						}
+						rotatation[3] = t_children[i]->getRotationf()[3];
+					}
+						
+				}
+				std::cout << selected << std::endl;
+
+				
+				ImGui::EndChild();	
+			}
+			if (ImGui::Button("Deselect"))
+				selected = -1;
+			ImGui::EndGroup();
+		}
+		
+		
+		ImGui::SameLine();
+		{
+			ImGui::BeginGroup();
+			if(ImGui::BeginChild("Edit", ImVec2(0, 0), false)) {
+				
+				
+				ImGui::InputText("Child Name", objectName, IM_ARRAYSIZE(objectName));
+				ImGui::Text("Orientatation");
+				ImGui::InputFloat3("translation", translation);
+				ImGui::InputFloat3("scale", scale);
+				ImGui::InputFloat3("rotatation", rotatation);
+				
+				ImGui::Text("Material");
+				ImGui::InputText("Material Name", materialName, IM_ARRAYSIZE(materialName));
+				
+				if (ImGui::Button("Reset")) {
+					memset(objectName, 0, 16);
+					memset(materialName, 0, 16);
+					for (int i = 0; i < 3; i++) {
+						translation[i] = 0.f;
+						scale[i] = 1.f;
+						rotatation[i] = 0.f;
+					}
+					rotatation[3] = 1.f;
+				}
+				ImGui::SameLine();
+				if (selected == -1) {
+					if (ImGui::Button("Add"))
+						root->addChild(new SceneNode(objectName, translation, scale, rotatation, materialName));
+				}
+				else {
+					if (ImGui::Button("Edit"))
+						root->getChildren()[selected]->setThis(new SceneNode(objectName, translation, scale, rotatation, materialName));
+				}
+				
+						
+				ImGui::EndChild();
+			}
+			ImGui::EndGroup();
+		}
+			
+			
+
+			
+		ImGui::End();	
+	}
+
+	void lightPropertiesGUI() {
+		ImGui::Begin("Light Properties");
+		ImGui::SliderFloat3("Direction", (float*)&light.direction, -1.f, 1.f);
+		ImGui::SliderFloat3("Light Ambient", (float*)&light.ambient, 0.f, 1.f);
+		ImGui::SliderFloat3("Light Diffuse", (float*)&light.diffuse, 0.f, 1.f);
+		ImGui::SliderFloat3("Light Specular", (float*)&light.specular, 0.f, 1.f);
+		ImGui::End();
+	}
+
+	void processInput() {
+		//--------------------------------ESC TO QUIT--------------------------------
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+			glfwSetWindowShouldClose(window, GLFW_TRUE);
+
+		//--------------------------------CAMERA MOVEMENT--------------------------------
+		static bool blockedCamera = true;
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+			double xpos, ypos;
+			glfwGetCursorPos(window, &xpos, &ypos);
+			camera->ProcessKeyboard((float)xpos, (float)ypos, deltaTime, blockedCamera);
+
+			if (blockedCamera)
+				blockedCamera = false;
+		}
+		else if ((glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)) {
+			double xpos, ypos;
+			glfwGetCursorPos(window, &xpos, &ypos);
+			camera->ProcessMouseMovement((float)xpos, (float)ypos, blockedCamera);
+
+			if (blockedCamera)
+				blockedCamera = false;
+		}
+		else
+			if (!blockedCamera)
+				blockedCamera = true;
+
+	}
+
+	inline static auto scroll_callback(GLFWwindow* window, double xoffset, double yoffset) -> void {
+		VoxelGameEngine* voxelGame = static_cast<VoxelGameEngine*>(glfwGetWindowUserPointer(window));
+		voxelGame->camera->ProcessMouseScroll((float)yoffset, deltaTime);
 	}
 };
 

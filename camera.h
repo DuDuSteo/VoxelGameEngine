@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 
 #include <vector>
 
@@ -45,8 +46,9 @@ public:
 
     glm::mat4 GetViewMatrix();
     void ProcessKeyboard(Camera_Movement direction, float deltaTime);
+    void ProcessKeyboard(float xpos, float ypos, float deltaTime, bool firstMouse);
     void ProcessMouseMovement(float xpos, float ypos, bool firstMouse, GLboolean constrainPitch = true);
-    void ProcessMouseScroll(float yoffset);
+    void ProcessMouseScroll(float yoffset, float deltaTime);
 
 private:
     void updateCameraVectors();
