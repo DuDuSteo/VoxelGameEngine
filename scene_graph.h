@@ -22,6 +22,10 @@ public:
 	SceneNode(std::string name, float translation[3], float scale[3], float rotation[4], std::string materialName);
 	~SceneNode();
 	void addChild(SceneNode* child);
+	void release();
+	void destroy();
+	void destroyChild(int index);
+	
 
 	void setName(std::string name);
 	void translate(glm::vec3 translation);

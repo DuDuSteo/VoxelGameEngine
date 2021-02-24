@@ -15,6 +15,7 @@
 #include "shader.h"
 #include "camera.h"
 #include "scene_graph.h"
+#include "octree.h"
 
 #define SCR_WIDTH 1280
 #define SCR_HEIGHT 720
@@ -374,6 +375,11 @@ private:
 				else {
 					if (ImGui::Button("Edit"))
 						root->getChildren()[selected]->setThis(new SceneNode(objectName, translation, scale, rotatation, materialName));
+					ImGui::SameLine();
+					if (ImGui::Button("Delete")) {
+						root->destroyChild(selected);
+						selected = -1;
+					}
 				}
 				
 						
@@ -433,6 +439,8 @@ private:
 };
 
 int main() {
-	VoxelGameEngine app;
-	app.run();
+	//VoxelGameEngine app;
+	//app.run();
+	Octree scene(1, glm::vec3(0.f, 0.f, 0.f));
+	return 0;
 }

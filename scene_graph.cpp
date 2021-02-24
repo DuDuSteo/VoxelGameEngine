@@ -42,10 +42,7 @@ SceneNode::SceneNode(std::string name, float translation[3], float scale[3], flo
 }
 
 SceneNode::~SceneNode() {
-	for (size_t i = 0; i < m_children.size(); i++)
-	{
-
-	}
+	destroy();
 }
 
 
@@ -55,6 +52,22 @@ void SceneNode::addChild(SceneNode* child)
 		child->setParent(this);
 		m_children.push_back(child);
 	}
+}
+
+void SceneNode::release() {
+	delete this;
+}
+
+void SceneNode::destroy() {
+	for (size_t i = 0; i < m_children.size(); i++)
+	{
+		m_children[i]->release();
+	}
+	m_children.clear();
+}
+
+void SceneNode::destroyChild(int index) {
+	m_children.erase(m_children.begin() + index);
 }
 
 
