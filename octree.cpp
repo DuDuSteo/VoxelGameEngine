@@ -1,11 +1,14 @@
 #include "octree.h"
 
 
-Octree::Octree(uint16_t depth, glm::vec3 startPos) {
+Octree::Octree(uint16_t depth, glm::vec3 midPos) {
 	m_root = new OctNode();
+	m_depth = depth; 
+
 	uint16_t diameter = (uint16_t)pow(2, depth);
-	GenerateBoundaryBox(m_root, 0, diameter, startPos);
-	GenerateTree(m_root, depth, diameter, startPos);
+	glm::vec3 t_pos(midPos.x - diameter/2, midPos.y - diameter / 2, midPos.z - diameter / 2);
+	GenerateBoundaryBox(m_root, diameter, t_pos);
+	GenerateTree(m_root, depth, diameter, t_pos);
 }
 
 void Octree::GenerateTree(OctNode* child, uint16_t depth, uint16_t diameter, glm::vec3 position) {
@@ -15,9 +18,10 @@ void Octree::GenerateTree(OctNode* child, uint16_t depth, uint16_t diameter, glm
 		diameter = diameter / 2;
 		for (Byte i = 0; i < 8; i++) {
 			child->children[i] = new OctNode();
-			
-			GenerateBoundaryBox(child->children[i], i, diameter, position);
-			GenerateTree(child->children[i], depth, diameter, position);
+			glm::vec3 t_pos = position;
+			CalculatePosition(i, diameter, t_pos);
+			GenerateBoundaryBox(child->children[i], diameter, t_pos);
+			GenerateTree(child->children[i], depth, diameter, t_pos);
 		}
 	}
 	else
@@ -25,38 +29,19 @@ void Octree::GenerateTree(OctNode* child, uint16_t depth, uint16_t diameter, glm
 
 }
 
-void Octree::GenerateBoundaryBox(OctNode* node, Byte bit, uint16_t diameter, glm::vec3 position) {
-	std::cout << (int)bit;
-	if (bit % 2 == 1) {	// z == true
-		node->boundaryBoxMin.z = position.z; 
-		node->boundaryBoxMax.z = position.z + diameter;
-	}
-	else {	// z == false
-		node->boundaryBoxMin.z = position.z - diameter; 
-		node->boundaryBoxMax.z = position.z; 
-	}		
+void Octree::CalculatePosition(Byte bit, uint16_t diameter, glm::vec3& position) {
+	if (bit % 2 == 1)	// z == true
+		position.z += diameter;
 	bit = bit >> 1;
-	if (bit % 2 == 1) {	// y == true
-		node->boundaryBoxMin.y = position.y;
-		node->boundaryBoxMax.y = position.y + diameter;
-	}
-	else {	// y == false
-		node->boundaryBoxMin.y = position.y - diameter;
-		node->boundaryBoxMax.y = position.y;
-	}
+	if (bit % 2 == 1)	// y == true
+		position.y += diameter;
 	bit = bit >> 1;
-	if (bit % 2 == 1) {	// x == true
-		node->boundaryBoxMin.x = position.x;
-		node->boundaryBoxMax.x = position.x + diameter;
-	}
-	else {	// z == false
-		node->boundaryBoxMin.x = position.x - diameter;
-		node->boundaryBoxMax.x = position.x;
-	}
-	std::cout << " Max x: " << node->boundaryBoxMax.x <<
-		" Max y: " << node->boundaryBoxMax.y <<
-		" Max z: " << node->boundaryBoxMax.z << std::endl;
-	std::cout << "-" << " Min x: " << node->boundaryBoxMin.x <<
-		" Min y: " << node->boundaryBoxMin.y <<
-		" Min z: " << node->boundaryBoxMin.z << std::endl << std::endl;
+	if (bit % 2 == 1)	// x == true
+		position.x += diameter;
+}
+
+void Octree::GenerateBoundaryBox(OctNode* node, uint16_t diameter, glm::vec3 position) {
+	node->boundaryBoxMin = position;
+	node->boundaryBoxMax = position + glm::vec3(diameter);
+	std::cout << node->boundaryBoxMin.x << " " << node->boundaryBoxMax.x << std::endl;
 }

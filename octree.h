@@ -15,9 +15,12 @@ struct OctNode {
 
 class Octree  {
 public:
-	Octree(uint16_t depth, glm::vec3 startPos);	//Creating Tree
+	Octree(uint16_t depth, glm::vec3 midPos);	//Creating Tree
+	void AddObject(void* object);
 private:
 	OctNode* m_root;
+	uint16_t m_depth;
 	void GenerateTree(OctNode* child, uint16_t depth, uint16_t diameter, glm::vec3 position);
-	void GenerateBoundaryBox(OctNode* node, Byte bit, uint16_t diameter, glm::vec3 position);
+	void CalculatePosition(Byte bit, uint16_t diameter, glm::vec3& position);
+	void GenerateBoundaryBox(OctNode* node, uint16_t diameter, glm::vec3 position);
 };

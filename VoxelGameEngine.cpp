@@ -16,6 +16,7 @@
 #include "camera.h"
 #include "scene_graph.h"
 #include "octree.h"
+#include "game_object.h"
 
 #define SCR_WIDTH 1280
 #define SCR_HEIGHT 720
@@ -94,7 +95,6 @@ const std::vector<uint32_t> indices = {
 	1, 19, 23,
 	8, 18, 11,
 	12, 16, 17
-
 };
 
 class VoxelGameEngine {
@@ -439,8 +439,6 @@ private:
 };
 
 int main() {
-	//VoxelGameEngine app;
-	//app.run();
-	Octree scene(1, glm::vec3(0.f, 0.f, 0.f));
-	return 0;
+	VoxelGameEngine app;
+	app.run();
 }
