@@ -13,10 +13,11 @@
 #include <imgui_impl_opengl3.h>
 
 #include "shader.h"
-#include "camera.h"
 #include "scene_graph.h"
+#include "camera.h"
 #include "octree.h"
-#include "game_object.h"
+#include "voxel_object.h"
+#include "chunk.h"
 
 #define SCR_WIDTH 1280
 #define SCR_HEIGHT 720
@@ -32,13 +33,10 @@ float frameTime[FRAME_TIME_SIZE];
 //temporal
 double mouseYOffset = 0;
 bool wireVisible = false;
-glm::vec3 cubePosition = glm::vec3(0.f, 0.f, 0.f);
 Material cubeMaterial;
+Block block;
+Chunk chunk;
 
-struct Vertex {
-	glm::vec3 pos;
-	glm::vec3 normals;
-};
 
 struct Light {
 	glm::vec3 direction;
@@ -52,50 +50,6 @@ struct Light {
 	{1.0f, 1.0f, 1.0f}
 };
 
-const std::vector<Vertex> vertices = {
-	{{0.50000, 0.50000, -0.500000},{0.000, 1.000, 0.0000}},		//0
-	{{0.50000, -0.50000, -0.500000},{0.000, -1.000, 0.0000}},		//1
-	{{0.50000, 0.50000, 0.500000},{0.000, 1.000, 0.0000}},		//2
-	{{0.50000, -0.50000, 0.500000},{0.000, 0.000, 1.0000}},		//3
-	{{-0.50000, 0.50000, -0.500000},{0.000, 1.000, 0.0000}},		//4
-	{{-0.50000, -0.50000, -0.500000},{-1.000, 0.000, 0.0000}},		//5
-	{{-0.50000, 0.50000, 0.500000},{-1.000, 0.000, 0.0000}},		//6
-	{{-0.50000, -0.50000, 0.500000},{0.000, 0.000, 1.0000}},		//7
-
-	{{0.50000, 0.50000, -0.500000},{1.000, 0.000, 0.0000}},		//0 + 8
-	{{0.50000, -0.50000, -0.500000},{1.000, 0.000, 0.0000}},		//1 + 8
-	{{0.50000, 0.50000, 0.500000},{0.000, 0.000, 1.0000}},		//2 + 8
-	{{0.50000, -0.50000, 0.500000},{1.000, 0.000, 0.0000}},		//3 + 8
-	{{-0.50000, 0.50000, -0.500000},{0.000, 0.000, -1.0000}},		//4 + 8
-	{{-0.50000, -0.50000, -0.500000},{0.000, -1.000, 0.0000}},		//5 + 8
-	{{-0.50000, 0.50000, 0.500000},{0.000, 1.000, 0.0000}},		//6 + 8
-	{{-0.50000, -0.50000, 0.500000},{-1.000, 0.000, 0.0000}},		//7 + 8
-
-	{{0.50000, 0.50000, -0.500000},{0.000, 0.000, -1.0000}},		//0 + 16
-	{{0.50000, -0.50000, -0.500000},{0.000, 0.000, -1.0000}},		//1 + 16
-	{{0.50000, 0.50000, 0.500000},{1.000, 0.000, 0.0000}},		//2 + 16
-	{{0.50000, -0.50000, 0.500000},{0.000, -1.000, 0.0000}},		//3 + 16
-	{{-0.50000, 0.50000, -0.500000},{-1.000, 0.000, 0.0000}},		//4 + 16
-	{{-0.50000, -0.50000, -0.500000},{0.000, 0.000, -1.0000}},		//5 + 16
-	{{-0.50000, 0.50000, 0.500000},{0.000, 0.000, 1.0000}},		//6 + 16
-	{{-0.50000, -0.50000, 0.500000},{0.000, -1.000, 0.0000}}		//7 + 16
-};
-
-const std::vector<uint32_t> indices = {
-	4, 2, 0,
-	10, 7, 3,
-	6, 5, 15,
-	1, 23, 13,
-	8, 11, 9,
-	12, 17, 21,
-
-	4, 14, 2,
-	10, 22, 7,
-	6, 20, 5,
-	1, 19, 23,
-	8, 18, 11,
-	12, 16, 17
-};
 
 class VoxelGameEngine {
 public:
@@ -148,16 +102,18 @@ private:
 	}
 
 	void initOpenGL() {
+		chunk.fill();
+
 		glGenBuffers(1, &VBO);
 		glGenBuffers(1, &EBO);
 
 		glGenVertexArrays(1, &VAO);
 
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, chunk.m_vertices.size() * sizeof(Vertex), &chunk.m_vertices.front(), GL_STATIC_DRAW);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), &indices.front(), GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, chunk.m_indices.size() * sizeof(uint32_t), &chunk.m_indices.front(), GL_STATIC_DRAW);
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 		glEnableVertexAttribArray(0);
@@ -171,10 +127,8 @@ private:
 		camera = new Camera();
 		camera->Position = glm::vec3(0.f, 0.f, 5.f);
 		memset(frameTime, 0, sizeof(frameTime));
-		root = new SceneNode("root");
-		SceneNode* t_child = new SceneNode("emerald_cube");
-		t_child->setMaterial("emerald");
-		root->addChild(t_child);
+
+		loadMaterial(cubeMaterial, "ruby");
 
 	}
 
@@ -206,7 +160,6 @@ private:
 		glm::mat4 model = glm::mat4(1.f);
 
 		processInput();
-		model = glm::translate(model, cubePosition);
 
 		shader.use();
 
@@ -221,7 +174,12 @@ private:
 
 		shader.setMat4("projection", projection);
 		shader.setMat4("view", view);
+		shader.setMat4("model", model);
 
+		shader.setVec3("material.ambient", cubeMaterial.ambient);
+		shader.setVec3("material.diffuse", cubeMaterial.diffuse);
+		shader.setVec3("material.specular", cubeMaterial.specular);
+		shader.setFloat("material.shininess", cubeMaterial.shininess * 128);
 		
 		if (wireVisible)
 		{
@@ -229,8 +187,11 @@ private:
 		}
 		else
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		
+		glDrawElements(GL_TRIANGLES, (GLsizei)chunk.m_indices.size(), GL_UNSIGNED_INT, 0);
+		
 
-		std::vector<SceneNode*> t_children = root->getChildren();
+		/*std::vector<SceneNode*> t_children = root->getChildren();
 		for (size_t i = 0; i < t_children.size(); i++) {
 
 			shader.setVec3("material.ambient", t_children[i]->m_material.ambient);
@@ -240,7 +201,7 @@ private:
 
 			shader.setMat4("model", t_children[i]->getMatrix());
 			glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0);
-		}	
+		}	*/
 	}
 
 	void drawGUI() {
@@ -248,9 +209,9 @@ private:
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		materialEditorGUI();
+		//materialEditorGUI();
 		debugInfoGUI();
-		sceneEditorGUI();
+		//sceneEditorGUI();
 		lightPropertiesGUI();
 
 		ImGui::Render();
@@ -264,8 +225,6 @@ private:
 		glfwDestroyWindow(window);
 		glfwTerminate();
 	}
-
-
 
 	void materialEditorGUI() {
 		//--------------------------------CUBE EDITOR--------------------------------
@@ -441,4 +400,5 @@ private:
 int main() {
 	VoxelGameEngine app;
 	app.run();
+
 }

@@ -49,6 +49,7 @@ public:
 private:
 	std::string m_name;
 	SceneNode* m_parent;
+
 	glm::mat4 m_matrix;
 	glm::vec3 m_translation;
 	glm::vec3 m_scale;

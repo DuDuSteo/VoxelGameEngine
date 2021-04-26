@@ -60,7 +60,13 @@
     <ClCompile Include="octree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="game_object.cpp">
+    <ClCompile Include="voxel_object.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="block.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chunk.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,7 +86,13 @@
     <ClInclude Include="octree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="game_object.h">
+    <ClInclude Include="voxel_object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="block.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chunk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

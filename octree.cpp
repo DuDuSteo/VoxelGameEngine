@@ -14,6 +14,7 @@ Octree::Octree(uint16_t depth, glm::vec3 midPos) {
 void Octree::GenerateTree(OctNode* child, uint16_t depth, uint16_t diameter, glm::vec3 position) {
 	if (depth) {
 		child->leaf = false;
+		child->filled = true;
 		depth--;
 		diameter = diameter / 2;
 		for (Byte i = 0; i < 8; i++) {
@@ -24,8 +25,11 @@ void Octree::GenerateTree(OctNode* child, uint16_t depth, uint16_t diameter, glm
 			GenerateTree(child->children[i], depth, diameter, t_pos);
 		}
 	}
-	else
+	else {
 		child->leaf = true;
+		child->filled = true;
+	}
+		
 
 }
 
@@ -45,3 +49,4 @@ void Octree::GenerateBoundaryBox(OctNode* node, uint16_t diameter, glm::vec3 pos
 	node->boundaryBoxMax = position + glm::vec3(diameter);
 	std::cout << node->boundaryBoxMin.x << " " << node->boundaryBoxMax.x << std::endl;
 }
+
