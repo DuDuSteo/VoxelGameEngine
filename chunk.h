@@ -2,7 +2,9 @@
 #include <iostream>
 #include "block.h"
 
-#define CHUNK_SIZE 16
+#define CHUNK_SIZE 3
+
+
 
 class Chunk {
 public:

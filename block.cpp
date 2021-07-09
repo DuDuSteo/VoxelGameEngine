@@ -77,3 +77,100 @@ void Block::createCube(const glm::vec3 position, uint32_t &offset) {
 		offset = offset + 4;
 	}
 }
+
+void Block::update(const Block& base, glm::vec3 position, uint32_t& offset) {
+	for (size_t i = 0; i < base.m_vertices.size(); i++)
+	{
+		m_vertices.push_back(Vertex{ {base.m_vertices[i].pos + position},
+									{base.m_vertices[i].normals} });
+
+	}
+	for (size_t i = 0; i < base.m_indices.size(); i++)
+	{
+		m_indices.push_back(base.m_indices[i] + offset);
+	}
+	
+	offset = offset + 4;
+}
+
+Block getBaseFace(BlockFace face)
+{
+	if (face == BlockFace::Top) {
+		return Block{
+			//vertices
+			{
+				{glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec3(0.f, 1.f, 0.f)},
+				{glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(0.f, 1.f, 0.f)},
+				{glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec3(0.f, 1.f, 0.f)},
+				{glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.f, 1.f, 0.f)}
+			},
+			//indices
+			{0, 2, 3, 3, 1, 0}
+		};
+	}
+	if (face == BlockFace::Bottom) {
+		return Block{
+			//vertices
+			{
+				{glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(0.f, -1.f, 0.f)},
+				{glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(0.f, -1.f, 0.f)},
+				{glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(0.f, -1.f, 0.f)},
+				{glm::vec3(0.5f, -0.5f, 0.5f), glm::vec3(0.f, -1.f, 0.f)}
+			},
+			//indices
+			{0, 2, 3, 3, 1, 0}
+		};
+	}
+	if (face == BlockFace::Left) {
+		return Block{
+			//vertices
+			{
+				{glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec3(-1.f, 0.f, 0.f)},
+				{glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec3(-1.f, 0.f, 0.f)},
+				{glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(-1.f, 0.f, 0.f)},
+				{glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(-1.f, 0.f, 0.f)}
+			},
+			//indices
+			{0, 2, 3, 3, 1, 0}
+		};
+	}
+	if (face == BlockFace::Right) {
+		return Block{
+			//vertices
+			{
+				{glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.f, 0.f, 0.f)},
+				{glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(1.f, 0.f, 0.f)},
+				{glm::vec3(0.5f, -0.5f, 0.5f), glm::vec3(1.f, 0.f, 0.f)},
+				{glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(1.f, 0.f, 0.f)}
+			},
+			//indices
+			{0, 2, 3, 3, 1, 0}
+		};
+	}
+	if (face == BlockFace::Front) {
+		return Block{
+			//vertices
+			{
+				{glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec3(0.f, 0.f, 1.f)},
+				{glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.f, 0.f, 1.f)},
+				{glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(0.f, 0.f, 1.f)},
+				{glm::vec3(0.5f, -0.5f, 0.5f), glm::vec3(0.f, 0.f, 1.f)}
+			},
+			//indices
+			{0, 2, 3, 3, 1, 0}
+		};
+	}
+	if (face == BlockFace::Back) {
+		return Block{
+			//vertices
+			{
+				{glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec3(0.f, 0.f, -1.f)},
+				{glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(0.f, 0.f, -1.f)},
+				{glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(0.f, 0.f, -1.f)},
+				{glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(0.f, 0.f, -1.f)}
+			},
+			//indices
+			{0, 2, 3, 3, 1, 0}
+		};
+	}
+}
