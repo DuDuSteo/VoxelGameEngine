@@ -125,7 +125,7 @@ private:
 		shader.init("basic.vert", "basic.frag");
 		// TEMPORAL STUFF HERE
 		camera = new Camera();
-		camera->Position = glm::vec3(0.f, 0.f, 5.f);
+		camera->Position = glm::vec3(0.f, 0.f, 50.f);
 		memset(frameTime, 0, sizeof(frameTime));
 
 		loadMaterial(cubeMaterial, "ruby");

@@ -2,7 +2,7 @@
 #include <iostream>
 #include "block.h"
 
-#define CHUNK_SIZE 3
+#define CHUNK_SIZE 4
 
 
 
