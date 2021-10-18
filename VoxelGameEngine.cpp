@@ -13,11 +13,10 @@
 #include <imgui_impl_opengl3.h>
 
 #include "shader.h"
-#include "scene_graph.h"
 #include "camera.h"
 #include "octree.h"
-#include "voxel_object.h"
 #include "chunk.h"
+#include "file_reader.h"
 
 #define SCR_WIDTH 1280
 #define SCR_HEIGHT 720
@@ -64,7 +63,6 @@ private:
 	uint32_t VAO, VBO, EBO;
 	Shader shader;
 	Camera* camera;
-	SceneNode* root;
 
 	void initWindow() {
 		glfwInit();
@@ -102,6 +100,9 @@ private:
 	}
 
 	void initOpenGL() {
+		std::vector<Voxel> voxels;
+		voxels = File::read("cube");
+
 		chunk.fill();
 
 		glGenBuffers(1, &VBO);
@@ -128,6 +129,7 @@ private:
 		camera->Position = glm::vec3(0.f, 0.f, 50.f);
 		memset(frameTime, 0, sizeof(frameTime));
 
+		
 		loadMaterial(cubeMaterial, "ruby");
 
 	}
@@ -189,19 +191,6 @@ private:
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		
 		glDrawElements(GL_TRIANGLES, (GLsizei)chunk.m_indices.size(), GL_UNSIGNED_INT, 0);
-		
-
-		/*std::vector<SceneNode*> t_children = root->getChildren();
-		for (size_t i = 0; i < t_children.size(); i++) {
-
-			shader.setVec3("material.ambient", t_children[i]->m_material.ambient);
-			shader.setVec3("material.diffuse", t_children[i]->m_material.diffuse);
-			shader.setVec3("material.specular", t_children[i]->m_material.specular);
-			shader.setFloat("material.shininess", (t_children[i]->m_material.shininess * 128));
-
-			shader.setMat4("model", t_children[i]->getMatrix());
-			glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0);
-		}	*/
 	}
 
 	void drawGUI() {
@@ -209,9 +198,7 @@ private:
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		//materialEditorGUI();
 		debugInfoGUI();
-		//sceneEditorGUI();
 		lightPropertiesGUI();
 
 		ImGui::Render();
@@ -226,27 +213,6 @@ private:
 		glfwTerminate();
 	}
 
-	void materialEditorGUI() {
-		//--------------------------------CUBE EDITOR--------------------------------
-		static char stringBuffer[15] = { 0 };
-
-		ImGui::Begin("Material Editor");
-		
-		ImGui::Text("Material");
-		ImGui::InputText("Name", stringBuffer, IM_ARRAYSIZE(stringBuffer));
-		
-		if (ImGui::Button("Save"))
-			saveMaterial(cubeMaterial, stringBuffer);
-		ImGui::SameLine();
-		if(ImGui::Button("Load"))
-			loadMaterial(cubeMaterial, stringBuffer);
-		ImGui::SliderFloat3("Ambient", (float*)&cubeMaterial.ambient, 0.f, 1.f);
-		ImGui::SliderFloat3("Diffuse", (float*)&cubeMaterial.diffuse, 0.f, 1.f);
-		ImGui::SliderFloat3("Specular", (float*)&cubeMaterial.specular, 0.f, 1.f);
-		ImGui::SliderFloat("Shininess", &cubeMaterial.shininess, 0.f, 1.f);
-		ImGui::End();
-	}
-
 	void debugInfoGUI() {
 		//--------------------------------DEBUG--------------------------------
 		ImGui::Begin("Debug Info");
@@ -254,103 +220,6 @@ private:
 			wireVisible ^= true;
 		ImGui::PlotHistogram("", frameTime, IM_ARRAYSIZE(frameTime), 0, NULL, 0.0f, 16.f, ImVec2(200, 80));
 		ImGui::End();
-	}
-
-	void sceneEditorGUI() {
-		ImGui::Begin("Scene Editor");
-			
-		static int selected = 0;
-		static float translation[3] = { 0.f, 0.f, 0.f };
-		static float scale[3] = { 1.f, 1.f, 1.f };
-		static float rotatation[4] = { 0.f, 0.f, 0.f, 1.f };
-		static char objectName[16] = { 0 };
-		static char materialName[16] = { 0 };
-
-		{
-			ImGui::BeginGroup();
-			if (ImGui::BeginChild("Scene", ImVec2(150, 200), true)) {
-				std::vector<SceneNode*> t_children = root->getChildren();
-
-				for (size_t i = 0; i < t_children.size(); i++) {
-					if (ImGui::Selectable(t_children[i]->getName().c_str(), selected == i)) {
-						selected = (int)i;
-						memset(objectName, 0, 16);
-						memset(materialName, 0, 16);
-						for (size_t j = 0; j < t_children[i]->getName().size(); j++)
-							objectName[j] = t_children[i]->getName()[j];
-						for (size_t j = 0; j < t_children[i]->m_material.name.size(); j++)
-							materialName[j] = t_children[i]->m_material.name[j];
-						for (size_t j = 0; j < 3; j++)
-						{
-							translation[j] = t_children[i]->getTranslationf()[j];
-							scale[j] = t_children[i]->getScalef()[j];
-							rotatation[j] = t_children[i]->getRotationf()[j];
-						}
-						rotatation[3] = t_children[i]->getRotationf()[3];
-					}
-						
-				}
-				std::cout << selected << std::endl;
-
-				
-				ImGui::EndChild();	
-			}
-			if (ImGui::Button("Deselect"))
-				selected = -1;
-			ImGui::EndGroup();
-		}
-		
-		
-		ImGui::SameLine();
-		{
-			ImGui::BeginGroup();
-			if(ImGui::BeginChild("Edit", ImVec2(0, 0), false)) {
-				
-				
-				ImGui::InputText("Child Name", objectName, IM_ARRAYSIZE(objectName));
-				ImGui::Text("Orientatation");
-				ImGui::InputFloat3("translation", translation);
-				ImGui::InputFloat3("scale", scale);
-				ImGui::InputFloat3("rotatation", rotatation);
-				
-				ImGui::Text("Material");
-				ImGui::InputText("Material Name", materialName, IM_ARRAYSIZE(materialName));
-				
-				if (ImGui::Button("Reset")) {
-					memset(objectName, 0, 16);
-					memset(materialName, 0, 16);
-					for (int i = 0; i < 3; i++) {
-						translation[i] = 0.f;
-						scale[i] = 1.f;
-						rotatation[i] = 0.f;
-					}
-					rotatation[3] = 1.f;
-				}
-				ImGui::SameLine();
-				if (selected == -1) {
-					if (ImGui::Button("Add"))
-						root->addChild(new SceneNode(objectName, translation, scale, rotatation, materialName));
-				}
-				else {
-					if (ImGui::Button("Edit"))
-						root->getChildren()[selected]->setThis(new SceneNode(objectName, translation, scale, rotatation, materialName));
-					ImGui::SameLine();
-					if (ImGui::Button("Delete")) {
-						root->destroyChild(selected);
-						selected = -1;
-					}
-				}
-				
-						
-				ImGui::EndChild();
-			}
-			ImGui::EndGroup();
-		}
-			
-			
-
-			
-		ImGui::End();	
 	}
 
 	void lightPropertiesGUI() {

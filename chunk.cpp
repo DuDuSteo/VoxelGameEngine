@@ -2,10 +2,6 @@
 
 bool voxels[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
 
-void Chunk::bind() {
-
-}
-
 void Chunk::fill() {
 	memset(voxels, true, sizeof(voxels));
 	

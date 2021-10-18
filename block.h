@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <glm/glm.hpp>
+#include "block.h"
 #define Byte unsigned char
 
 enum class BlockFace {
@@ -12,7 +13,6 @@ struct Vertex {
 	glm::vec3 pos;
 	glm::vec3 normals;
 };
-
 
 class Block {
 public:

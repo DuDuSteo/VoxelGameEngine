@@ -19,6 +19,12 @@
     <Filter Include="Source Files\imgui">
       <UniqueIdentifier>{c21bfabd-83fc-4dcf-9cdb-a084e25b5277}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\old">
+      <UniqueIdentifier>{d9026d8c-e3ef-4e0e-8e59-ec116d6adadb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\file">
+      <UniqueIdentifier>{aeff09d7-32b5-45d8-884c-3428d8a4a9b1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="VoxelGameEngine.cpp">
@@ -51,22 +57,25 @@
     <ClCompile Include="imgui\imgui_tables.cpp">
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="scene_graph.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="octree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="voxel_object.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="block.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="chunk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scene_graph.cpp">
+      <Filter>Source Files\old</Filter>
+    </ClCompile>
+    <ClCompile Include="voxel_object.cpp">
+      <Filter>Source Files\old</Filter>
+    </ClCompile>
+    <ClCompile Include="file_reader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -77,16 +86,10 @@
     <ClInclude Include="camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scene_graph.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="octree.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="voxel_object.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="block.h">
@@ -94,6 +97,18 @@
     </ClInclude>
     <ClInclude Include="chunk.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scene_graph.h">
+      <Filter>Source Files\old</Filter>
+    </ClInclude>
+    <ClInclude Include="file_reader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="voxel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="voxel_object.h">
+      <Filter>Source Files\old</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -103,5 +118,10 @@
     <None Include="basic.vert">
       <Filter>Resource Files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="file\cube.txt">
+      <Filter>Source Files\file</Filter>
+    </Text>
   </ItemGroup>
 </Project>
