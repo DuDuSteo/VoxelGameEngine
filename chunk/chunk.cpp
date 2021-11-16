@@ -2,6 +2,10 @@
 
 bool voxels[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
 
+void addBlock(glm::vec3 position){
+	
+}
+
 void Chunk::fill() {
 	memset(voxels, true, sizeof(voxels));
 	

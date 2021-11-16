@@ -1,9 +1,8 @@
-#pragma once
 #include <iostream>
 #include <cstring>
 #include "block.hpp"
 
-#define CHUNK_SIZE 2
+#define CHUNK_SIZE 1
 
 class Voxel {
 public:
@@ -14,10 +13,9 @@ private:
 
 class Chunk {
 public:
-	void addBlock();
+	void addBlock(glm::vec3 position);
 	void draw();
 	void fill();
-	void fill(std::vector<Voxel> voxels);
 
 	std::vector<Vertex> m_vertices;
 	std::vector<uint32_t> m_indices;

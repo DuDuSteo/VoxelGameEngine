@@ -1,269 +1,302 @@
+#include <cstdint>
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
+#include <glm/matrix.hpp>
 #include <iostream>
-#include <vector>
 #include <queue>
+#include <vector>
 
-#include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_glfw.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
+#include "imgui/imgui.h"
 
-#include "shader/shader.hpp"
 #include "camera/camera.hpp"
-#include "octree/octree.hpp"
 #include "chunk/chunk.hpp"
+#include "octree/octree.hpp"
+#include "shader/shader.hpp"
+#include "file_handler/file_handler.hpp"
 
 #define SCR_WIDTH 1280
 #define SCR_HEIGHT 720
 #define APPLICATION_NAME "VoxelGameEngine"
 #define FRAME_TIME_SIZE 60 * 20
+#define RAYCAST_LENGTH 10.f
 
-//Timings
+// Timings
 float currentFrame = 0;
 float deltaTime = 0;
 float lastFrame = 0;
 float frameTime[FRAME_TIME_SIZE];
 
-//temporal
+// temporal
 double mouseYOffset = 0;
 bool wireVisible = false;
 Material cubeMaterial;
 Block block;
 Chunk chunk;
 
-
 struct Light {
-	glm::vec3 direction;
-	glm::vec3 ambient;
-	glm::vec3 diffuse;
-	glm::vec3 specular;
-} light = {
-	{0.f, -1.f, 0.f},
-	{0.2f, 0.2f, 0.2f},
-	{0.5f, 0.5f, 0.5f},
-	{1.0f, 1.0f, 1.0f}
-};
-
+  glm::vec3 direction;
+  glm::vec3 ambient;
+  glm::vec3 diffuse;
+  glm::vec3 specular;
+} light = {{0.f, 0.f, -1.f},
+           {0.2f, 0.2f, 0.2f},
+           {0.5f, 0.5f, 0.5f},
+           {1.0f, 1.0f, 1.0f}};
 
 class VoxelGameEngine {
 public:
-	void run() {
-		initWindow();
-		initOpenGL();
-		mainLoop();
-		cleanup();
-	}
+  void run() {
+    initWindow();
+    initOpenGL();
+    mainLoop();
+    cleanup();
+  }
+
 private:
-	GLFWwindow* window;
-	uint32_t VAO, VBO, EBO;
-	Shader shader;
-	Camera* camera;
+  GLFWwindow *window;
+  uint32_t VAO, VBO, EBO;
+  uint32_t VAO2, VBO2;
+  Shader shader;
+  Camera *camera;
 
-	void initWindow() {
-		glfwInit();
-		glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+  void initWindow() {
+    glfwInit();
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 
-		window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, APPLICATION_NAME, NULL, NULL);
-		if (window == NULL) {
-			std::cout << "Failed to create GLFW window" << std::endl;
-			glfwTerminate();
-		}
+    window =
+        glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, APPLICATION_NAME, NULL, NULL);
+    if (window == NULL) {
+      std::cout << "Failed to create GLFW window" << std::endl;
+      glfwTerminate();
+    }
 
-		glfwMakeContextCurrent(window);
+    glfwMakeContextCurrent(window);
 
-		//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		glfwSetWindowUserPointer(window, this);
-		glfwSetScrollCallback(window, scroll_callback);
-		glfwSetCursorPos(window, SCR_WIDTH / 2, SCR_HEIGHT / 2);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetWindowUserPointer(window, this);
+    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetCursorPos(window, SCR_WIDTH / 2, SCR_HEIGHT / 2);
 
-		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-			std::cout << "Failed to initialize GLAD" << std::endl;
-			glfwTerminate();
-		}
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+      std::cout << "Failed to initialize GLAD" << std::endl;
+      glfwTerminate();
+    }
 
-		//Imgui init
+    // Imgui init
 
-		IMGUI_CHECKVERSION();
+    IMGUI_CHECKVERSION();
 
-		ImGui::CreateContext();
-		ImGuiIO& io = ImGui::GetIO();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
 
-		ImGui_ImplGlfw_InitForOpenGL(window, true);
-		ImGui_ImplOpenGL3_Init("#version 330 core");
-		ImGui::StyleColorsDark();
-	}
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330 core");
+    ImGui::StyleColorsDark();
+  }
 
-	void initOpenGL() {
+  void initOpenGL() {
+    std::vector<Vertex> t_vertices;
+    std::vector<uint32_t> t_indices;
+    loadVertexBuffer(t_vertices);
+    loadIndexBuffer(t_indices);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
 
-		chunk.fill();
+    glGenVertexArrays(1, &VAO);
 
-		glGenBuffers(1, &VBO);
-		glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, t_vertices.size() * sizeof(Vertex),
+                 &t_vertices.front(), GL_STATIC_DRAW);
 
-		glGenVertexArrays(1, &VAO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 t_indices.size() * sizeof(uint32_t),
+                 &t_indices.front(), GL_STATIC_DRAW);
 
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, chunk.m_vertices.size() * sizeof(Vertex), &chunk.m_vertices.front(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          (void *)sizeof(glm::vec3));
+    glEnableVertexAttribArray(1);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, chunk.m_indices.size() * sizeof(uint32_t), &chunk.m_indices.front(), GL_STATIC_DRAW);
+    glEnable(GL_DEPTH_TEST);
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)sizeof(glm::vec3));
-		glEnableVertexAttribArray(1);
+    shader.init("shader/basic.vert", "shader/basic.frag");
+    // TEMPORAL STUFF HERE
+    camera = new Camera();
+    camera->Position = glm::vec3(0.f, 0.f, 50.f);
+    memset(frameTime, 0, sizeof(frameTime));
 
-		glEnable(GL_DEPTH_TEST);
-		
-		shader.init("shader/basic.vert", "shader/basic.frag");
-		// TEMPORAL STUFF HERE
-		camera = new Camera();
-		camera->Position = glm::vec3(0.f, 0.f, 50.f);
-		memset(frameTime, 0, sizeof(frameTime));
+    loadMaterial(cubeMaterial, "octree/ruby");
+  }
 
-		
-		loadMaterial(cubeMaterial, "octree/ruby");
+  void mainLoop() {
+    while (!glfwWindowShouldClose(window)) {
+      glfwPollEvents();
+      drawFrame();
+      drawGUI();
+      glfwSwapBuffers(window);
+    }
+  }
+  void drawFace(Material faceMat, uint32_t start) {
+    shader.setVec3("material.ambient", faceMat.ambient);
+    shader.setVec3("material.diffuse", faceMat.diffuse);
+    shader.setVec3("material.specular", faceMat.specular);
+    shader.setFloat("material.shininess", faceMat.shininess * 128);
 
-	}
+    glDrawElements(GL_TRIANGLES, (GLsizei)chunk.m_indices.size() / 6,
+                   GL_UNSIGNED_INT, (void *)(start * sizeof(uint32_t)));
+  }
 
-	void mainLoop() {
-		while (!glfwWindowShouldClose(window)) {
-			glfwPollEvents();
-			drawFrame();
-			drawGUI();
-			glfwSwapBuffers(window);
-		}
-	}
+  void drawFrame() {
+    currentFrame = (float)glfwGetTime();
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+    for (size_t i = 1; i < FRAME_TIME_SIZE; i++) {
+      frameTime[i - 1] = frameTime[i];
+    }
+    frameTime[FRAME_TIME_SIZE - 1] = deltaTime * 1000;
 
-	void drawFrame() {
-		currentFrame = (float)glfwGetTime();
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
-		for (size_t i = 1; i < FRAME_TIME_SIZE; i++) {
-			frameTime[i - 1] = frameTime[i];
-		}
-		frameTime[FRAME_TIME_SIZE - 1] = deltaTime * 1000;
-		
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(1.f, 1.f, 1.f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		
+    glm::mat4 projection = glm::perspective(
+        glm::radians(45.f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.f);
+    glm::mat4 view = camera->GetViewMatrix();
+    glm::mat4 model = glm::mat4(1.f);
 
-		glm::mat4 projection = glm::perspective(glm::radians(45.f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.f);
-		glm::mat4 view = camera->GetViewMatrix();
-		glm::mat4 model = glm::mat4(1.f);
+    processInput();
+    glm::vec3 mouse_ray = getRayCast(projection, view, RAYCAST_LENGTH);
+    shader.use();
 
-		processInput();
+    shader.setVec3("viewPos", camera->Position);
 
-		shader.use();
+    shader.setVec3("light.direction", light.direction);
+    shader.setVec3("light.ambient", light.ambient);
+    shader.setVec3("light.diffuse", light.diffuse);
+    shader.setVec3("light.specular", light.specular);
 
-		
+    shader.setMat4("projection", projection);
+    shader.setMat4("view", view);
+    shader.setMat4("model", model);
 
-		shader.setVec3("viewPos", camera->Position);
+    if (wireVisible) {
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    } else
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    for (int i = 0; i < 31; i += 6) {
+      drawFace(cubeMaterial, i);
+    }
+  }
 
-		shader.setVec3("light.direction", light.direction);
-		shader.setVec3("light.ambient", light.ambient);
-		shader.setVec3("light.diffuse", light.diffuse);
-		shader.setVec3("light.specular", light.specular);
+  void drawGUI() {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
 
-		shader.setMat4("projection", projection);
-		shader.setMat4("view", view);
-		shader.setMat4("model", model);
+    debugInfoGUI();
+    lightPropertiesGUI();
 
-		shader.setVec3("material.ambient", cubeMaterial.ambient);
-		shader.setVec3("material.diffuse", cubeMaterial.diffuse);
-		shader.setVec3("material.specular", cubeMaterial.specular);
-		shader.setFloat("material.shininess", cubeMaterial.shininess * 128);
-		
-		if (wireVisible)
-		{
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		}
-		else
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		
-		glDrawElements(GL_TRIANGLES, (GLsizei)chunk.m_indices.size(), GL_UNSIGNED_INT, 0);
-	}
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+  }
 
-	void drawGUI() {
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
+  void cleanup() {
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+    glDeleteBuffers(1, &VAO);
+    glfwDestroyWindow(window);
+    glfwTerminate();
+  }
 
-		debugInfoGUI();
-		lightPropertiesGUI();
+  void debugInfoGUI() {
+    //--------------------------------DEBUG--------------------------------
+    ImGui::Begin("Debug Info");
+    if (ImGui::Button("WireFrame mode"))
+      wireVisible ^= true;
+    ImGui::PlotHistogram("", frameTime, IM_ARRAYSIZE(frameTime), 0, NULL, 0.0f,
+                         16.f, ImVec2(200, 80));
+    ImGui::End();
+  }
 
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());	
-	}
+  void lightPropertiesGUI() {
+    ImGui::Begin("Light Properties");
+    ImGui::SliderFloat3("Direction", (float *)&light.direction, -1.f, 1.f);
+    ImGui::SliderFloat3("Light Ambient", (float *)&light.ambient, 0.f, 1.f);
+    ImGui::SliderFloat3("Light Diffuse", (float *)&light.diffuse, 0.f, 1.f);
+    ImGui::SliderFloat3("Light Specular", (float *)&light.specular, 0.f, 1.f);
+    ImGui::End();
+  }
+  void processInput() {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+      glfwSetWindowShouldClose(window, GLFW_TRUE);
 
-	void cleanup() {
-		glDeleteBuffers(1, &VBO);
-		glDeleteBuffers(1, &EBO);
-		glDeleteBuffers(1, &VAO);
-		glfwDestroyWindow(window);
-		glfwTerminate();
-	}
+    static bool blockedCamera = true;
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS &&
+        glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+      double xpos, ypos;
+      glfwGetCursorPos(window, &xpos, &ypos);
+      camera->ProcessKeyboard((float)xpos, (float)ypos, deltaTime,
+                              blockedCamera);
 
-	void debugInfoGUI() {
-		//--------------------------------DEBUG--------------------------------
-		ImGui::Begin("Debug Info");
-		if (ImGui::Button("WireFrame mode"))
-			wireVisible ^= true;
-		ImGui::PlotHistogram("", frameTime, IM_ARRAYSIZE(frameTime), 0, NULL, 0.0f, 16.f, ImVec2(200, 80));
-		ImGui::End();
-	}
+      if (blockedCamera)
+        blockedCamera = false;
+    } else if ((glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) ==
+                GLFW_PRESS)) {
+      double xpos, ypos;
+      glfwGetCursorPos(window, &xpos, &ypos);
+      camera->ProcessMouseMovement((float)xpos, (float)ypos, blockedCamera);
 
-	void lightPropertiesGUI() {
-		ImGui::Begin("Light Properties");
-		ImGui::SliderFloat3("Direction", (float*)&light.direction, -1.f, 1.f);
-		ImGui::SliderFloat3("Light Ambient", (float*)&light.ambient, 0.f, 1.f);
-		ImGui::SliderFloat3("Light Diffuse", (float*)&light.diffuse, 0.f, 1.f);
-		ImGui::SliderFloat3("Light Specular", (float*)&light.specular, 0.f, 1.f);
-		ImGui::End();
-	}
+      if (blockedCamera)
+        blockedCamera = false;
+    } else if (!blockedCamera)
+      blockedCamera = true;
+  }
 
-	void processInput() {
-		//--------------------------------ESC TO QUIT--------------------------------
-		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-			glfwSetWindowShouldClose(window, GLFW_TRUE);
+  glm::vec2 getScreenPos() {
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
 
-		//--------------------------------CAMERA MOVEMENT--------------------------------
-		static bool blockedCamera = true;
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-			double xpos, ypos;
-			glfwGetCursorPos(window, &xpos, &ypos);
-			camera->ProcessKeyboard((float)xpos, (float)ypos, deltaTime, blockedCamera);
+    xpos = xpos / (SCR_WIDTH / 2) - 1;
+    ypos = 1 - ypos / (SCR_HEIGHT / 2);
 
-			if (blockedCamera)
-				blockedCamera = false;
-		}
-		else if ((glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)) {
-			double xpos, ypos;
-			glfwGetCursorPos(window, &xpos, &ypos);
-			camera->ProcessMouseMovement((float)xpos, (float)ypos, blockedCamera);
+    return glm::vec2(xpos, ypos);
+  }
 
-			if (blockedCamera)
-				blockedCamera = false;
-		}
-		else
-			if (!blockedCamera)
-				blockedCamera = true;
+  glm::vec3 getRayCast(glm::mat4 projection, glm::mat4 view, float ray_length) {
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+      glm::vec4 ray_point = glm::vec4(getScreenPos(), -1.f, 1.f);
+      glm::vec4 ray_eye = glm::inverse(projection) * ray_point;
+      ray_eye = glm::vec4(glm::vec2(ray_eye), -1.f, 0.f);
+      glm::vec3 ray_world = glm::vec3(glm::inverse(view) * ray_eye);
+      std::cout << "<<< " << camera->Position.x << " " << camera->Position.y
+                << " " << camera->Position.z << std::endl;
+      ray_world = camera->Position + ray_world * ray_length;
+      std::cout << ">>> " << ray_world.x << " " << ray_world.y << " "
+                << ray_world.z << std::endl;
+      return ray_world;
+    } else
+      return glm::vec3(0.f);
+  }
 
-	}
+  void rayCasting(glm::vec2 screen_pos) {
+    glm::vec4 ray = glm::vec4(screen_pos, -1.f, 1.f);
+  }
 
-	inline static auto scroll_callback(GLFWwindow* window, double xoffset, double yoffset) -> void {
-		VoxelGameEngine* voxelGame = static_cast<VoxelGameEngine*>(glfwGetWindowUserPointer(window));
-		voxelGame->camera->ProcessMouseScroll((float)yoffset, deltaTime);
-	}
+  inline static auto scroll_callback(GLFWwindow *window, double xoffset,
+                                     double yoffset) -> void {
+    VoxelGameEngine *voxelGame =
+        static_cast<VoxelGameEngine *>(glfwGetWindowUserPointer(window));
+    voxelGame->camera->ProcessMouseScroll((float)yoffset, deltaTime);
+  }
 };
 
 int main() {
-	VoxelGameEngine app;
-	app.run();
-
+  VoxelGameEngine app;
+  app.run();
 }
