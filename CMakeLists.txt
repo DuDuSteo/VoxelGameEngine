@@ -9,8 +9,7 @@ include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends)
 
 add_subdirectory(shader)
 add_subdirectory(camera)
-add_subdirectory(octree)
-add_subdirectory(chunk)
+add_subdirectory(material)
 add_subdirectory(file_handler)
 
 set(IMGUI_SOURCES 
@@ -23,4 +22,4 @@ set(IMGUI_SOURCES
     ${IMGUI_DIR}/imgui_widgets.cpp)
 
 add_executable(${PROJECT_NAME} VoxelEditor.cpp glad.c ${IMGUI_SOURCES})
-target_link_libraries(${PROJECT_NAME} glfw glm shader camera octree chunk file_handler ${CMAKE_DL_LIBS})
+target_link_libraries(${PROJECT_NAME} glfw glm shader camera material file_handler ${CMAKE_DL_LIBS})

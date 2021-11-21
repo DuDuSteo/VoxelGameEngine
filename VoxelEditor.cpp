@@ -14,10 +14,9 @@
 #include "imgui/imgui.h"
 
 #include "camera/camera.hpp"
-#include "chunk/chunk.hpp"
-#include "octree/octree.hpp"
-#include "shader/shader.hpp"
 #include "file_handler/file_handler.hpp"
+#include "material/material.hpp"
+#include "shader/shader.hpp"
 
 #define SCR_WIDTH 1280
 #define SCR_HEIGHT 720
@@ -35,8 +34,6 @@ float frameTime[FRAME_TIME_SIZE];
 double mouseYOffset = 0;
 bool wireVisible = false;
 Material cubeMaterial;
-Block block;
-Chunk chunk;
 
 struct Light {
   glm::vec3 direction;
@@ -63,6 +60,8 @@ private:
   uint32_t VAO2, VBO2;
   Shader shader;
   Camera *camera;
+  std::vector<Vertex> t_vertices;
+  std::vector<uint32_t> t_indices;
 
   void initWindow() {
     glfwInit();
@@ -100,8 +99,7 @@ private:
   }
 
   void initOpenGL() {
-    std::vector<Vertex> t_vertices;
-    std::vector<uint32_t> t_indices;
+
     loadVertexBuffer(t_vertices);
     loadIndexBuffer(t_indices);
     glGenBuffers(1, &VBO);
@@ -114,8 +112,7 @@ private:
                  &t_vertices.front(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 t_indices.size() * sizeof(uint32_t),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, t_indices.size() * sizeof(uint32_t),
                  &t_indices.front(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
@@ -149,7 +146,7 @@ private:
     shader.setVec3("material.specular", faceMat.specular);
     shader.setFloat("material.shininess", faceMat.shininess * 128);
 
-    glDrawElements(GL_TRIANGLES, (GLsizei)chunk.m_indices.size() / 6,
+    glDrawElements(GL_TRIANGLES, (GLsizei)t_indices.size() / 6,
                    GL_UNSIGNED_INT, (void *)(start * sizeof(uint32_t)));
   }
 
@@ -189,6 +186,7 @@ private:
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     } else
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     for (int i = 0; i < 31; i += 6) {
       drawFace(cubeMaterial, i);
     }
