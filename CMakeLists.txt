@@ -12,6 +12,9 @@ add_subdirectory(GLFW)
 #glm
 add_subdirectory(glm)
 
+#glad
+add_subdirectory(glad)
+
 set(IMGUI_DIR imgui)
 include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends)
 
@@ -31,4 +34,4 @@ set(IMGUI_SOURCES
     ${IMGUI_DIR}/imgui_widgets.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCE} glad.c ${IMGUI_SOURCES})
-target_link_libraries(${PROJECT_NAME} glfw glm shader camera material file_handler object ${CMAKE_DL_LIBS})
+target_link_libraries(${PROJECT_NAME} glfw glm::glm glad shader camera material file_handler object ${CMAKE_DL_LIBS})
