@@ -2,6 +2,7 @@
 #include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
 
 #include <glm/matrix.hpp>
@@ -14,10 +15,10 @@
 #include "imgui/imgui.h"
 
 #include "camera/camera.hpp"
-#include "chunk/chunk.hpp"
-#include "octree/octree.hpp"
-#include "shader/shader.hpp"
 #include "file_handler/file_handler.hpp"
+#include "material/material.hpp"
+#include "shader/shader.hpp"
+#include "object/object.hpp"
 
 #define SCR_WIDTH 1280
 #define SCR_HEIGHT 720
@@ -35,8 +36,6 @@ float frameTime[FRAME_TIME_SIZE];
 double mouseYOffset = 0;
 bool wireVisible = false;
 Material cubeMaterial;
-Block block;
-Chunk chunk;
 
 struct Light {
   glm::vec3 direction;
@@ -63,6 +62,8 @@ private:
   uint32_t VAO2, VBO2;
   Shader shader;
   Camera *camera;
+  std::vector<Vertex> t_vertices;
+  std::vector<uint32_t> t_indices;
 
   void initWindow() {
     glfwInit();
@@ -100,8 +101,7 @@ private:
   }
 
   void initOpenGL() {
-    std::vector<Vertex> t_vertices;
-    std::vector<uint32_t> t_indices;
+
     loadVertexBuffer(t_vertices);
     loadIndexBuffer(t_indices);
     glGenBuffers(1, &VBO);
@@ -114,8 +114,7 @@ private:
                  &t_vertices.front(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 t_indices.size() * sizeof(uint32_t),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, t_indices.size() * sizeof(uint32_t),
                  &t_indices.front(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
@@ -143,14 +142,16 @@ private:
       glfwSwapBuffers(window);
     }
   }
-  void drawFace(Material faceMat, uint32_t start) {
+
+  void drawFace(glm::mat4 model, Material faceMat, uint32_t start) {
+    shader.setMat4("model", model);
     shader.setVec3("material.ambient", faceMat.ambient);
     shader.setVec3("material.diffuse", faceMat.diffuse);
     shader.setVec3("material.specular", faceMat.specular);
     shader.setFloat("material.shininess", faceMat.shininess * 128);
 
-    glDrawElements(GL_TRIANGLES, (GLsizei)chunk.m_indices.size() / 6,
-                   GL_UNSIGNED_INT, (void *)(start * sizeof(uint32_t)));
+    glDrawElements(GL_TRIANGLES, (GLsizei)t_indices.size() / 6, GL_UNSIGNED_INT,
+                   (void *)(start * sizeof(uint32_t)));
   }
 
   void drawFrame() {
@@ -183,14 +184,16 @@ private:
 
     shader.setMat4("projection", projection);
     shader.setMat4("view", view);
-    shader.setMat4("model", model);
 
     if (wireVisible) {
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     } else
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    for (int i = 0; i < 31; i += 6) {
-      drawFace(cubeMaterial, i);
+    for (int j = 0; j < 4; j++) {
+      for (int i = 0; i < 31; i += 6) {
+        drawFace(model, cubeMaterial, i);
+      }
+      model = glm::translate(model, glm::vec3(1.f, 0.f, 0.f));
     }
   }
 
