@@ -2,6 +2,7 @@
 #include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
 
 #include <glm/matrix.hpp>
@@ -17,6 +18,7 @@
 #include "file_handler/file_handler.hpp"
 #include "material/material.hpp"
 #include "shader/shader.hpp"
+#include "object/object.hpp"
 
 #define SCR_WIDTH 1280
 #define SCR_HEIGHT 720
@@ -140,14 +142,16 @@ private:
       glfwSwapBuffers(window);
     }
   }
-  void drawFace(Material faceMat, uint32_t start) {
+
+  void drawFace(glm::mat4 model, Material faceMat, uint32_t start) {
+    shader.setMat4("model", model);
     shader.setVec3("material.ambient", faceMat.ambient);
     shader.setVec3("material.diffuse", faceMat.diffuse);
     shader.setVec3("material.specular", faceMat.specular);
     shader.setFloat("material.shininess", faceMat.shininess * 128);
 
-    glDrawElements(GL_TRIANGLES, (GLsizei)t_indices.size() / 6,
-                   GL_UNSIGNED_INT, (void *)(start * sizeof(uint32_t)));
+    glDrawElements(GL_TRIANGLES, (GLsizei)t_indices.size() / 6, GL_UNSIGNED_INT,
+                   (void *)(start * sizeof(uint32_t)));
   }
 
   void drawFrame() {
@@ -180,15 +184,16 @@ private:
 
     shader.setMat4("projection", projection);
     shader.setMat4("view", view);
-    shader.setMat4("model", model);
 
     if (wireVisible) {
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     } else
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    for (int i = 0; i < 31; i += 6) {
-      drawFace(cubeMaterial, i);
+    for (int j = 0; j < 4; j++) {
+      for (int i = 0; i < 31; i += 6) {
+        drawFace(model, cubeMaterial, i);
+      }
+      model = glm::translate(model, glm::vec3(1.f, 0.f, 0.f));
     }
   }
 
