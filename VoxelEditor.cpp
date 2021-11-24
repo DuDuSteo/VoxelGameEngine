@@ -103,6 +103,9 @@ private:
 
     loadVertexBuffer(t_vertices);
     loadIndexBuffer(t_indices);
+
+    
+
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
 
@@ -123,14 +126,14 @@ private:
     glEnableVertexAttribArray(1);
 
     glEnable(GL_DEPTH_TEST);
+    shader.init("files/basic.vert", "files/basic.frag");
 
-    shader.init("shader/basic.vert", "shader/basic.frag");
     // TEMPORAL STUFF HERE
     camera = new Camera();
     camera->Position = glm::vec3(0.f, 0.f, 50.f);
     memset(frameTime, 0, sizeof(frameTime));
 
-    loadMaterial(cubeMaterial, "octree/ruby");
+    loadMaterial(cubeMaterial, "files/ruby.mat");
   }
 
   void mainLoop() {

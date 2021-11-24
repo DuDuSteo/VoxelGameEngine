@@ -15,8 +15,8 @@ void saveMaterial(Material mat, const std::string& matName) {
 }
 
 void loadMaterial(Material& mat, const std::string& matName) {
-	std::cout << matName + ".mat" << std::endl;
-	std::ifstream file(matName + ".mat");
+	std::cout << matName << std::endl;
+	std::ifstream file(matName);
 	if (file.bad()) {
 		std::cout << "MATERIAL::LOAD_MATERIAL::FILE_BAD" << std::endl;
 		return;

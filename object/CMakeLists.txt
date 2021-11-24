@@ -1,1 +1,0 @@
-add_library(object object.hpp object.cpp)
