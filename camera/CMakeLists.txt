@@ -1,1 +1,0 @@
-add_library(camera camera.hpp camera.cpp)

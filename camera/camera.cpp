@@ -58,7 +58,7 @@ void Camera::ProcessKeyboard(float xpos, float ypos, float deltaTime, bool first
     Position += Up * yoffset * velocity;
 }
 
-void Camera::ProcessMouseMovement(float xpos, float ypos, bool firstMouse, GLboolean constrainPitch)
+void Camera::ProcessMouseMovement(float xpos, float ypos, bool firstMouse, bool constrainPitch)
 {
     if (firstMouse) {
         lastX = xpos;

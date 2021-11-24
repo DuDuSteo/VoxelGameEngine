@@ -9,15 +9,15 @@
 #include <queue>
 #include <vector>
 
-#include "imgui/backends/imgui_impl_glfw.h"
-#include "imgui/backends/imgui_impl_opengl3.h"
-#include "imgui/imgui.h"
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 #include "camera/camera.hpp"
 #include "file_handler/file_handler.hpp"
 #include "material/material.hpp"
-#include "shader/shader.hpp"
 #include "object/object.hpp"
+#include "shader/shader.hpp"
 
 #define SCR_WIDTH 1280
 #define SCR_HEIGHT 720
