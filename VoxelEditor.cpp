@@ -35,7 +35,6 @@ double mouseYOffset = 0;
 bool wireVisible = false;
 float raycastLength = 1.f;
 Material cubeMaterial;
-Object object;
 glm::vec3 mouse_ray;
 
 Light light = {{0.f, 0.f, -1.f},
@@ -98,6 +97,7 @@ private:
   std::vector<Vertex> t_vertices;
   std::vector<uint32_t> t_indices;
   DebugDraw debugDraw;
+  Object *object;
 
   void initWindow() {
     glfwInit();
@@ -163,6 +163,7 @@ private:
     glEnable(GL_DEPTH_TEST);
     shader.init("files/basic.vert", "files/basic.frag");
     debugDraw.init();
+    object = new Object();
 
     // TEMPORAL STUFF HERE
     camera = new Camera();
@@ -171,13 +172,13 @@ private:
 
     cubeMaterial = loadMaterial("files/ruby.mat");
 
-    object.addVoxel(glm::ivec3(0, 0, 0), cubeMaterial);
-    object.addVoxel(glm::ivec3(2, 0, 0), cubeMaterial);
-    object.addVoxel(glm::ivec3(4, 0, 0), cubeMaterial);
-    object.addVoxel(glm::ivec3(6, 0, 0), cubeMaterial);
-    object.addVoxel(glm::ivec3(8, 0, 0), cubeMaterial);
-    object.addVoxel(glm::ivec3(10, 0, 0), cubeMaterial);
-    object.addVoxel(glm::ivec3(12, 0, 0), cubeMaterial);
+    object->addVoxel(glm::ivec3(0, 0, 0), cubeMaterial);
+    object->addVoxel(glm::ivec3(2, 0, 0), cubeMaterial);
+    object->addVoxel(glm::ivec3(4, 0, 0), cubeMaterial);
+    object->addVoxel(glm::ivec3(6, 0, 0), cubeMaterial);
+    object->addVoxel(glm::ivec3(8, 0, 0), cubeMaterial);
+    object->addVoxel(glm::ivec3(10, 0, 0), cubeMaterial);
+    object->addVoxel(glm::ivec3(12, 0, 0), cubeMaterial);
   }
 
   void mainLoop() {
@@ -206,13 +207,14 @@ private:
     } else
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    glm::mat4 projection = glm::perspective(
+    MVP mvp;
+    mvp.projection = glm::perspective(
         glm::radians(45.f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.f);
-    glm::mat4 view = camera->GetViewMatrix();
-    glm::mat4 model = glm::mat4(1.f);
+    mvp.view = camera->GetViewMatrix();
+    mvp.model = glm::mat4(1.f);
 
     processInput();
-    object.checkRay(camera->Position, getRayCast(projection, view));
+    object->checkRay(camera->Position, getRayCast(mvp.projection, mvp.view));
     //debugDraw.drawLine(camera->Position, mouse_ray, projection, view);
 
     shader.use();
@@ -224,15 +226,15 @@ private:
     shader.setVec3("light.diffuse", light.diffuse);
     shader.setVec3("light.specular", light.specular);
 
-    shader.setMat4("projection", projection);
-    shader.setMat4("view", view);
+    shader.setMat4("projection", mvp.projection);
+    shader.setMat4("view", mvp.view);
 
     //temp
-    std::vector<Voxel> voxels = object.getListOfVoxels();
-    glm::mat4 objectModel = model;
+    std::vector<Voxel> voxels = object->getListOfVoxels();
+    glm::mat4 objectModel = mvp.model;
 
     for (Voxel voxel : voxels) {
-      objectModel = glm::translate(model, voxel.pos);
+      objectModel = glm::translate(mvp.model, voxel.pos);
       shader.setMat4("model", objectModel);
       shader.setVec3("material.ambient", voxel.mat.ambient);
       shader.setVec3("material.diffuse", voxel.mat.diffuse);
@@ -292,7 +294,7 @@ private:
     ImGui::Begin("Object Handler");
     ImGui::InputInt3("Voxel Position", (int *)&pos);
     if(ImGui::Button("Add Voxel"))
-      object.addVoxel(pos, cubeMaterial);
+      object->addVoxel(pos, cubeMaterial);
     ImGui::End();
   }
 
