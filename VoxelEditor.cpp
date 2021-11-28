@@ -13,6 +13,8 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+
+#include "material/material.hpp"
 #include "camera/camera.hpp"
 #include "file_handler/file_handler.hpp"
 #include "material/material.hpp"
@@ -29,14 +31,10 @@ float currentFrame = 0;
 float deltaTime = 0;
 float lastFrame = 0;
 float frameTime[FRAME_TIME_SIZE];
-
-// temporal
-double mouseYOffset = 0;
 bool wireVisible = false;
-float raycastLength = 1.f;
-Material cubeMaterial;
-glm::vec3 mouse_ray;
 
+
+Material cubeMaterial;
 Light light = {{0.f, 0.f, -1.f},
            {0.2f, 0.2f, 0.2f},
            {0.5f, 0.5f, 0.5f},
@@ -84,19 +82,14 @@ class VoxelGameEngine {
 public:
   void run() {
     initWindow();
-    initOpenGL();
+    initEngine();
     mainLoop();
     cleanup();
   }
 
 private:
   GLFWwindow *window;
-  uint32_t VAO, VBO, EBO;
-  Shader shader;
   Camera *camera;
-  std::vector<Vertex> t_vertices;
-  std::vector<uint32_t> t_indices;
-  DebugDraw debugDraw;
   Object *object;
 
   void initWindow() {
@@ -134,51 +127,13 @@ private:
     ImGui::StyleColorsDark();
   }
 
-  void initOpenGL() {
-
-    loadVertexBuffer(t_vertices);
-    loadIndexBuffer(t_indices);
-
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO); 
-    
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, t_vertices.size() * sizeof(Vertex),
-                 &t_vertices.front(), GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, t_indices.size() * sizeof(uint32_t),
-                 &t_indices.front(), GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-                          (void *)sizeof(glm::vec3));
-    glBindVertexArray(0);
-
-    glEnable(GL_DEPTH_TEST);
-    shader.init("files/basic.vert", "files/basic.frag");
-    debugDraw.init();
+  void initEngine() {  
     object = new Object();
-
-    // TEMPORAL STUFF HERE
     camera = new Camera();
+
     camera->Position = glm::vec3(0.f, 0.f, 20.f);
     memset(frameTime, 0, sizeof(frameTime));
-
     cubeMaterial = loadMaterial("files/ruby.mat");
-
-    object->addVoxel(glm::ivec3(0, 0, 0), cubeMaterial);
-    object->addVoxel(glm::ivec3(2, 0, 0), cubeMaterial);
-    object->addVoxel(glm::ivec3(4, 0, 0), cubeMaterial);
-    object->addVoxel(glm::ivec3(6, 0, 0), cubeMaterial);
-    object->addVoxel(glm::ivec3(8, 0, 0), cubeMaterial);
-    object->addVoxel(glm::ivec3(10, 0, 0), cubeMaterial);
-    object->addVoxel(glm::ivec3(12, 0, 0), cubeMaterial);
   }
 
   void mainLoop() {
@@ -214,39 +169,8 @@ private:
     mvp.model = glm::mat4(1.f);
 
     processInput();
+    object->draw(mvp, camera->Position, light);
     object->checkRay(camera->Position, getRayCast(mvp.projection, mvp.view));
-    //debugDraw.drawLine(camera->Position, mouse_ray, projection, view);
-
-    shader.use();
-
-    shader.setVec3("viewPos", camera->Position);
-
-    shader.setVec3("light.direction", light.direction);
-    shader.setVec3("light.ambient", light.ambient);
-    shader.setVec3("light.diffuse", light.diffuse);
-    shader.setVec3("light.specular", light.specular);
-
-    shader.setMat4("projection", mvp.projection);
-    shader.setMat4("view", mvp.view);
-
-    //temp
-    std::vector<Voxel> voxels = object->getListOfVoxels();
-    glm::mat4 objectModel = mvp.model;
-
-    for (Voxel voxel : voxels) {
-      objectModel = glm::translate(mvp.model, voxel.pos);
-      shader.setMat4("model", objectModel);
-      shader.setVec3("material.ambient", voxel.mat.ambient);
-      shader.setVec3("material.diffuse", voxel.mat.diffuse);
-      shader.setVec3("material.specular", voxel.mat.specular);
-      shader.setFloat("material.shininess", voxel.mat.shininess * 128);
-      
-      for (int start = 0; start < 31; start += 6) {
-        glBindVertexArray(VAO);   
-        glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT,
-                   (void *)(start * sizeof(uint32_t)));
-      }
-    }
   }
 
   void drawGUI() {
@@ -264,9 +188,6 @@ private:
   }
 
   void cleanup() {
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
-    glDeleteBuffers(1, &VAO);
     glfwDestroyWindow(window);
     glfwTerminate();
   }
@@ -299,11 +220,11 @@ private:
   }
 
   void rayCastingInfoGUI() {
-    ImGui::Begin("Ray Casting Info");
-    ImGui::InputFloat3("Ray Position", (float *)&mouse_ray);
-    ImGui::InputFloat3("Camera Position", (float *)&camera->Position);
-    ImGui::InputFloat("Ray Length", &raycastLength);
-    ImGui::End();
+    // ImGui::Begin("Ray Casting Info");
+    // ImGui::InputFloat3("Ray Position", (float *)&mouse_ray);
+    // ImGui::InputFloat3("Camera Position", (float *)&camera->Position);
+    // ImGui::InputFloat("Ray Length", &raycastLength);
+    // ImGui::End();
   }
 
   void processInput() {
