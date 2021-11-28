@@ -4,12 +4,14 @@ project(VoxelEditor)
 set(LIB_DIR ${PROJECT_SOURCE_DIR}/libs)
 
 set(SOURCES 
+   # ${PROJECT_SOURCE_DIR}/VoxelTester.cpp
+    ${PROJECT_SOURCE_DIR}/object/object.cpp 
     ${PROJECT_SOURCE_DIR}/VoxelEditor.cpp
     ${PROJECT_SOURCE_DIR}/shader/shader.cpp
     ${PROJECT_SOURCE_DIR}/camera/camera.cpp 
     ${PROJECT_SOURCE_DIR}/material/material.cpp 
     ${PROJECT_SOURCE_DIR}/file_handler/file_handler.cpp 
-    ${PROJECT_SOURCE_DIR}/object/object.cpp 
+    ${PROJECT_SOURCE_DIR}/console_log/console_log.cpp 
 )
 
 #imgui
@@ -49,12 +51,3 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE GLFW_INCLUDE_NONE)
 #glm
 set(GLM_DIR ${LIB_DIR}/glm)
 include_directories(${GLM_DIR})
-
-#my "libaries"
-# add_subdirectory(shader)
-# add_subdirectory(camera)
-# add_subdirectory(material)
-# add_subdirectory(file_handler)
-# add_subdirectory(object)
-
-# target_link_libraries(${PROJECT_NAME} shader camera material file_handler object )

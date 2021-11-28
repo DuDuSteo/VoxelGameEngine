@@ -10,16 +10,12 @@
 #ifndef OBJECT_HPP
 #define OBJECT_HPP
 
-struct Voxel {
-  glm::vec3 pos;
-  Material mat;
-};
-
 class Object {
 public:
   Object();
   void draw(glm::mat4 model, Shader shader);
   void addVoxel(glm::ivec3 pos, Material mat);
+  void checkRay(glm::vec3 ray_start, glm::vec3 ray_dir);
   std::vector<Voxel> getListOfVoxels();
 private:
   std::vector<Voxel> m_voxels;

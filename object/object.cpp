@@ -23,6 +23,11 @@ void Object::addVoxel(glm::ivec3 pos, Material mat) {
     << t_voxel.mat.name << ")" << std::endl;
 }
 
+void Object::checkRay(glm::vec3 ray_start, glm::vec3 ray_dir) {
+    std::cout << "OBJECT::CHECK_RAY" << std::endl;
+    
+}
+
 std::vector<Voxel> Object::getListOfVoxels(){
     return m_voxels;
 }

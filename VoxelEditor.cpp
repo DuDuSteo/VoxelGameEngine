@@ -23,7 +23,6 @@
 #define SCR_HEIGHT 720
 #define APPLICATION_NAME "VoxelGameEngine"
 #define FRAME_TIME_SIZE 60 * 20
-#define RAYCAST_LENGTH 10.f
 
 // Timings
 float currentFrame = 0;
@@ -34,29 +33,32 @@ float frameTime[FRAME_TIME_SIZE];
 // temporal
 double mouseYOffset = 0;
 bool wireVisible = false;
+float raycastLength = 1.f;
 Material cubeMaterial;
 Object object;
 glm::vec3 mouse_ray;
 
-struct Light {
-  glm::vec3 direction;
-  glm::vec3 ambient;
-  glm::vec3 diffuse;
-  glm::vec3 specular;
-} light = {{0.f, 0.f, -1.f},
+Light light = {{0.f, 0.f, -1.f},
            {0.2f, 0.2f, 0.2f},
            {0.5f, 0.5f, 0.5f},
            {1.0f, 1.0f, 1.0f}};
 
 class DebugDraw {
   public:
-    void drawLine(glm::vec3 start, glm::vec3 end ) {
-      glGenVertexArrays(1, &m_VAO);
-      glGenBuffers(1, &m_VBO);
+    void init() {
+      m_shader.init("files/debug.vert", "files/debug.frag");
+    }
+    void drawLine(glm::vec3 start, glm::vec3 end, glm::mat4 projection, glm::mat4 view) {
+      glm::mat4 model = glm::mat4(1.f);
 
+      glGenVertexArrays(1, &m_VAO);
+      glBindVertexArray(m_VAO); 
+
+      glGenBuffers(1, &m_VBO);
       std::vector<glm::vec3> t_vertices;
-      t_vertices.push_back(start);
       t_vertices.push_back(end);
+      t_vertices.push_back(end + glm::vec3(1.f, 0.f, 0.f));
+      
 
       glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
       glBufferData(GL_ARRAY_BUFFER, sizeof(t_vertices), &t_vertices.front(), GL_STATIC_DRAW);
@@ -64,10 +66,19 @@ class DebugDraw {
       glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
       glEnableVertexAttribArray(0);
 
-      glDrawArrays(GL_LINES, 0, 2); 
+      m_shader.use();
+      m_shader.setVec3("color", glm::vec3(1.f, 0.f, 0.f));
+      m_shader.setMat4("projection", projection);
+      m_shader.setMat4("view", view);
+      m_shader.setMat4("model", model);
+
+      glDrawArrays(GL_LINE_STRIP, 0, t_vertices.size()); 
+
+      glBindVertexArray(0); 
     }
   private:
     uint32_t m_VBO, m_VAO;
+    Shader m_shader;
 };
 
 class VoxelGameEngine {
@@ -129,6 +140,7 @@ private:
     loadIndexBuffer(t_indices);
 
     glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO); 
     
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -141,18 +153,16 @@ private:
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, t_indices.size() * sizeof(uint32_t),
                  &t_indices.front(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
+    glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                           (void *)sizeof(glm::vec3));
-    glEnableVertexAttribArray(1);
-
-    // glBindBuffer(GL_ARRAY_BUFFER, 0); 
-    // glBindBuffer(GL_ARRAY_BUFFER, 1); 
-    // glBindVertexArray(0); 
+    glBindVertexArray(0);
 
     glEnable(GL_DEPTH_TEST);
     shader.init("files/basic.vert", "files/basic.frag");
+    debugDraw.init();
 
     // TEMPORAL STUFF HERE
     camera = new Camera();
@@ -179,17 +189,6 @@ private:
     }
   }
 
-  void drawFace(glm::mat4 model, Material faceMat, uint32_t start) {
-    shader.setMat4("model", model);
-    shader.setVec3("material.ambient", faceMat.ambient);
-    shader.setVec3("material.diffuse", faceMat.diffuse);
-    shader.setVec3("material.specular", faceMat.specular);
-    shader.setFloat("material.shininess", faceMat.shininess * 128);
-
-    glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT,
-                   (void *)(start * sizeof(uint32_t)));
-  }
-
   void drawFrame() {
     currentFrame = (float)glfwGetTime();
     deltaTime = currentFrame - lastFrame;
@@ -202,13 +201,20 @@ private:
     glClearColor(1.f, 1.f, 1.f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    if (wireVisible) {
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    } else
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     glm::mat4 projection = glm::perspective(
         glm::radians(45.f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.f);
     glm::mat4 view = camera->GetViewMatrix();
     glm::mat4 model = glm::mat4(1.f);
 
     processInput();
-    mouse_ray = getRayCast(projection, view);
+    object.checkRay(camera->Position, getRayCast(projection, view));
+    //debugDraw.drawLine(camera->Position, mouse_ray, projection, view);
+
     shader.use();
 
     shader.setVec3("viewPos", camera->Position);
@@ -221,23 +227,22 @@ private:
     shader.setMat4("projection", projection);
     shader.setMat4("view", view);
 
-    if (wireVisible) {
-      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    } else
-      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    //debugDraw.drawLine(camera->Position, mouse_ray);
-
     //temp
     std::vector<Voxel> voxels = object.getListOfVoxels();
     glm::mat4 objectModel = model;
-    std::cout << "x";
-    glBindVertexArray(VAO);
-    std::cout << "d";
+
     for (Voxel voxel : voxels) {
       objectModel = glm::translate(model, voxel.pos);
-      for (int i = 0; i < 31; i += 6) {
-        drawFace(objectModel, voxel.mat, i);
+      shader.setMat4("model", objectModel);
+      shader.setVec3("material.ambient", voxel.mat.ambient);
+      shader.setVec3("material.diffuse", voxel.mat.diffuse);
+      shader.setVec3("material.specular", voxel.mat.specular);
+      shader.setFloat("material.shininess", voxel.mat.shininess * 128);
+      
+      for (int start = 0; start < 31; start += 6) {
+        glBindVertexArray(VAO);   
+        glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT,
+                   (void *)(start * sizeof(uint32_t)));
       }
     }
   }
@@ -293,7 +298,9 @@ private:
 
   void rayCastingInfoGUI() {
     ImGui::Begin("Ray Casting Info");
-    ImGui::InputFloat3("Voxel Position", (float *)&mouse_ray);
+    ImGui::InputFloat3("Ray Position", (float *)&mouse_ray);
+    ImGui::InputFloat3("Camera Position", (float *)&camera->Position);
+    ImGui::InputFloat("Ray Length", &raycastLength);
     ImGui::End();
   }
 
@@ -326,7 +333,7 @@ private:
 
     //LMB handle the click
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-
+      
     }
   }
 
@@ -345,12 +352,7 @@ private:
     glm::vec4 ray_eye = glm::inverse(projection) * ray_point;
     ray_eye = glm::vec4(glm::vec2(ray_eye), -1.f, 0.f);
     glm::vec3 ray_world = glm::vec3(glm::inverse(view) * ray_eye);
-    ray_world = camera->Position + ray_world * RAYCAST_LENGTH;
     return ray_world;
-  }
-
-  void rayCasting(glm::vec2 screen_pos) {
-    glm::vec4 ray = glm::vec4(screen_pos, -1.f, 1.f);
   }
 
   inline static auto scroll_callback(GLFWwindow *window, double xoffset,
