@@ -35,6 +35,8 @@ float frameTime[FRAME_TIME_SIZE];
 double mouseYOffset = 0;
 bool wireVisible = false;
 Material cubeMaterial;
+Object object;
+glm::vec3 mouse_ray;
 
 struct Light {
   glm::vec3 direction;
@@ -45,6 +47,28 @@ struct Light {
            {0.2f, 0.2f, 0.2f},
            {0.5f, 0.5f, 0.5f},
            {1.0f, 1.0f, 1.0f}};
+
+class DebugDraw {
+  public:
+    void drawLine(glm::vec3 start, glm::vec3 end ) {
+      glGenVertexArrays(1, &m_VAO);
+      glGenBuffers(1, &m_VBO);
+
+      std::vector<glm::vec3> t_vertices;
+      t_vertices.push_back(start);
+      t_vertices.push_back(end);
+
+      glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(t_vertices), &t_vertices.front(), GL_STATIC_DRAW);
+
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+      glEnableVertexAttribArray(0);
+
+      glDrawArrays(GL_LINES, 0, 2); 
+    }
+  private:
+    uint32_t m_VBO, m_VAO;
+};
 
 class VoxelGameEngine {
 public:
@@ -58,11 +82,11 @@ public:
 private:
   GLFWwindow *window;
   uint32_t VAO, VBO, EBO;
-  uint32_t VAO2, VBO2;
   Shader shader;
   Camera *camera;
   std::vector<Vertex> t_vertices;
   std::vector<uint32_t> t_indices;
+  DebugDraw debugDraw;
 
   void initWindow() {
     glfwInit();
@@ -104,12 +128,10 @@ private:
     loadVertexBuffer(t_vertices);
     loadIndexBuffer(t_indices);
 
+    glGenVertexArrays(1, &VAO);
     
-
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
-
-    glGenVertexArrays(1, &VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, t_vertices.size() * sizeof(Vertex),
@@ -125,15 +147,27 @@ private:
                           (void *)sizeof(glm::vec3));
     glEnableVertexAttribArray(1);
 
+    // glBindBuffer(GL_ARRAY_BUFFER, 0); 
+    // glBindBuffer(GL_ARRAY_BUFFER, 1); 
+    // glBindVertexArray(0); 
+
     glEnable(GL_DEPTH_TEST);
     shader.init("files/basic.vert", "files/basic.frag");
 
     // TEMPORAL STUFF HERE
     camera = new Camera();
-    camera->Position = glm::vec3(0.f, 0.f, 50.f);
+    camera->Position = glm::vec3(0.f, 0.f, 20.f);
     memset(frameTime, 0, sizeof(frameTime));
 
-    loadMaterial(cubeMaterial, "files/ruby.mat");
+    cubeMaterial = loadMaterial("files/ruby.mat");
+
+    object.addVoxel(glm::ivec3(0, 0, 0), cubeMaterial);
+    object.addVoxel(glm::ivec3(2, 0, 0), cubeMaterial);
+    object.addVoxel(glm::ivec3(4, 0, 0), cubeMaterial);
+    object.addVoxel(glm::ivec3(6, 0, 0), cubeMaterial);
+    object.addVoxel(glm::ivec3(8, 0, 0), cubeMaterial);
+    object.addVoxel(glm::ivec3(10, 0, 0), cubeMaterial);
+    object.addVoxel(glm::ivec3(12, 0, 0), cubeMaterial);
   }
 
   void mainLoop() {
@@ -152,7 +186,7 @@ private:
     shader.setVec3("material.specular", faceMat.specular);
     shader.setFloat("material.shininess", faceMat.shininess * 128);
 
-    glDrawElements(GL_TRIANGLES, (GLsizei)t_indices.size() / 6, GL_UNSIGNED_INT,
+    glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT,
                    (void *)(start * sizeof(uint32_t)));
   }
 
@@ -174,7 +208,7 @@ private:
     glm::mat4 model = glm::mat4(1.f);
 
     processInput();
-    glm::vec3 mouse_ray = getRayCast(projection, view, RAYCAST_LENGTH);
+    mouse_ray = getRayCast(projection, view);
     shader.use();
 
     shader.setVec3("viewPos", camera->Position);
@@ -191,11 +225,20 @@ private:
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     } else
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    for (int j = 0; j < 4; j++) {
+
+    //debugDraw.drawLine(camera->Position, mouse_ray);
+
+    //temp
+    std::vector<Voxel> voxels = object.getListOfVoxels();
+    glm::mat4 objectModel = model;
+    std::cout << "x";
+    glBindVertexArray(VAO);
+    std::cout << "d";
+    for (Voxel voxel : voxels) {
+      objectModel = glm::translate(model, voxel.pos);
       for (int i = 0; i < 31; i += 6) {
-        drawFace(model, cubeMaterial, i);
+        drawFace(objectModel, voxel.mat, i);
       }
-      model = glm::translate(model, glm::vec3(1.f, 0.f, 0.f));
     }
   }
 
@@ -206,6 +249,8 @@ private:
 
     debugInfoGUI();
     lightPropertiesGUI();
+    objectHandlingGUI();
+    rayCastingInfoGUI();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -220,7 +265,6 @@ private:
   }
 
   void debugInfoGUI() {
-    //--------------------------------DEBUG--------------------------------
     ImGui::Begin("Debug Info");
     if (ImGui::Button("WireFrame mode"))
       wireVisible ^= true;
@@ -237,10 +281,28 @@ private:
     ImGui::SliderFloat3("Light Specular", (float *)&light.specular, 0.f, 1.f);
     ImGui::End();
   }
+
+  void objectHandlingGUI() {
+    static glm::ivec3 pos = glm::ivec3(0, 0, 0);
+    ImGui::Begin("Object Handler");
+    ImGui::InputInt3("Voxel Position", (int *)&pos);
+    if(ImGui::Button("Add Voxel"))
+      object.addVoxel(pos, cubeMaterial);
+    ImGui::End();
+  }
+
+  void rayCastingInfoGUI() {
+    ImGui::Begin("Ray Casting Info");
+    ImGui::InputFloat3("Voxel Position", (float *)&mouse_ray);
+    ImGui::End();
+  }
+
   void processInput() {
+    //ESC to leave
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
       glfwSetWindowShouldClose(window, GLFW_TRUE);
 
+    //Camera Handler
     static bool blockedCamera = true;
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS &&
         glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
@@ -261,6 +323,11 @@ private:
         blockedCamera = false;
     } else if (!blockedCamera)
       blockedCamera = true;
+
+    //LMB handle the click
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+
+    }
   }
 
   glm::vec2 getScreenPos() {
@@ -273,20 +340,13 @@ private:
     return glm::vec2(xpos, ypos);
   }
 
-  glm::vec3 getRayCast(glm::mat4 projection, glm::mat4 view, float ray_length) {
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-      glm::vec4 ray_point = glm::vec4(getScreenPos(), -1.f, 1.f);
-      glm::vec4 ray_eye = glm::inverse(projection) * ray_point;
-      ray_eye = glm::vec4(glm::vec2(ray_eye), -1.f, 0.f);
-      glm::vec3 ray_world = glm::vec3(glm::inverse(view) * ray_eye);
-      std::cout << "<<< " << camera->Position.x << " " << camera->Position.y
-                << " " << camera->Position.z << std::endl;
-      ray_world = camera->Position + ray_world * ray_length;
-      std::cout << ">>> " << ray_world.x << " " << ray_world.y << " "
-                << ray_world.z << std::endl;
-      return ray_world;
-    } else
-      return glm::vec3(0.f);
+  glm::vec3 getRayCast(glm::mat4 projection, glm::mat4 view) {
+    glm::vec4 ray_point = glm::vec4(getScreenPos(), -1.f, 1.f);
+    glm::vec4 ray_eye = glm::inverse(projection) * ray_point;
+    ray_eye = glm::vec4(glm::vec2(ray_eye), -1.f, 0.f);
+    glm::vec3 ray_world = glm::vec3(glm::inverse(view) * ray_eye);
+    ray_world = camera->Position + ray_world * RAYCAST_LENGTH;
+    return ray_world;
   }
 
   void rayCasting(glm::vec2 screen_pos) {

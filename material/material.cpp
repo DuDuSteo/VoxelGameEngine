@@ -14,20 +14,21 @@ void saveMaterial(Material mat, const std::string& matName) {
 	file.close();
 }
 
-void loadMaterial(Material& mat, const std::string& matName) {
+Material loadMaterial(const std::string& matName) {
 	std::cout << matName << std::endl;
 	std::ifstream file(matName);
 	if (file.bad()) {
 		std::cout << "MATERIAL::LOAD_MATERIAL::FILE_BAD" << std::endl;
-		return;
 	}
-	file >> mat.name;
+	Material t_mat;
+	file >> t_mat.name;
 	for (int i = 0; i < 3; i++)
-		file >> mat.ambient[i];
+		file >> t_mat.ambient[i];
 	for (int i = 0; i < 3; i++)
-		file >> mat.diffuse[i];
+		file >> t_mat.diffuse[i];
 	for (int i = 0; i < 3; i++)
-		file >> mat.specular[i];
-	file >> mat.shininess;
+		file >> t_mat.specular[i];
+	file >> t_mat.shininess;
 	file.close();
+	return t_mat;
 }
