@@ -9,6 +9,7 @@
 #include <vector>
 
 #define VOXEL_COUNT 255
+#define MAX_RAY_RANGE 100.f
 
 #ifndef OBJECT_HPP
 #define OBJECT_HPP
@@ -18,7 +19,7 @@ public:
   Object();
   void draw(MVP mvp, glm::vec3 cameraPosition, Light light);
   void addVoxel(glm::ivec3 pos, Material mat);
-  void checkRay(glm::vec3 ray_start, glm::vec3 ray_dir);
+  void checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir);
   std::vector<Voxel> getListOfVoxels();
 private:
 uint32_t m_VAO, m_VBO, m_EBO;

@@ -1,5 +1,7 @@
 #include "object.hpp"
 
+
+
 Object::Object() {
     memset(m_hash_voxels, 0, sizeof(m_hash_voxels));
     loadVertexBuffer(m_vertices);
@@ -81,9 +83,56 @@ void Object::addVoxel(glm::ivec3 pos, Material mat) {
     << t_voxel.mat.name << ")" << std::endl;
 }
 
-void Object::checkRay(glm::vec3 ray_start, glm::vec3 ray_dir) {
-    std::cout << "OBJECT::CHECK_RAY" << std::endl;
+void Object::checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir) {
+    // return pointer to hitVoxel
+    Voxel* ray_hit = nullptr;
+    float ray_distance = MAX_RAY_RANGE;
+
+    for (int i = 0; i < m_voxels.size(); i++) {
+        glm::vec3 max = m_voxels[i].pos + glm::vec3(0.5f);
+        glm::vec3 min = m_voxels[i].pos - glm::vec3(0.5f);
+
+        float tmin = (min.x - ray_origin.x) / ray_dir.x; 
+        float tmax = (max.x - ray_origin.x) / ray_dir.x; 
     
+        if (tmin > tmax) std::swap(tmin, tmax); 
+    
+        float tymin = (min.y - ray_origin.y) / ray_dir.y; 
+        float tymax = (max.y - ray_origin.y) / ray_dir.y; 
+    
+        if (tymin > tymax) std::swap(tymin, tymax); 
+
+        if (tymin > tmin) 
+            tmin = tymin; 
+    
+        if (tymax < tmax) 
+            tmax = tymax;      
+    
+        float tzmin = (min.z - ray_origin.z) / ray_dir.z; 
+        float tzmax = (max.z - ray_origin.z) / ray_dir.z; 
+    
+        if (tzmin > tzmax) std::swap(tzmin, tzmax); 
+    
+        if (tzmin > tmin) 
+            tmin = tzmin; 
+    
+        if (tzmax < tmax) 
+            tmax = tzmax;     
+        if(!( ((tmin > tymax) || (tymin > tmax)) || ((tmin > tzmax) || (tzmin > tmax)) )) {
+            float distance = sqrt(pow(m_voxels[i].pos.x - ray_origin.x, 2) +
+                            pow(m_voxels[i].pos.y - ray_origin.y, 2) +
+                            pow(m_voxels[i].pos.z - ray_origin.z, 2));
+            if(distance < ray_distance) {
+                ray_hit = &m_voxels[i];
+                ray_distance = distance;
+            }   
+        }       
+    }
+    if(ray_distance == MAX_RAY_RANGE) {
+        std::cout << "missed" << std::endl;
+    } else {
+        std::cout << "(" << ray_hit->pos.x << ", " << ray_hit->pos.y << ", " << ray_hit->pos.z << ") at distance: " << ray_distance << std::endl;
+    }
 }
 
 std::vector<Voxel> Object::getListOfVoxels(){
