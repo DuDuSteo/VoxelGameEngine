@@ -19,7 +19,9 @@ public:
   Object();
   void draw(MVP mvp, glm::vec3 cameraPosition, Light light);
   void addVoxel(glm::ivec3 pos, Material mat);
-  void checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir);
+  void changeColor(Voxel* voxel, Material mat);
+  void removeVoxel(Voxel* voxel);
+  Voxel* checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir);
   std::vector<Voxel> getListOfVoxels();
 private:
 uint32_t m_VAO, m_VBO, m_EBO;

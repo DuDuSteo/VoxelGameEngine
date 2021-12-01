@@ -32,6 +32,7 @@ float deltaTime = 0;
 float lastFrame = 0;
 float frameTime[FRAME_TIME_SIZE];
 bool wireVisible = false;
+bool colorMode = true;
 
 
 Material cubeMaterial;
@@ -39,6 +40,43 @@ Light light = {{0.f, 0.f, -1.f},
            {0.2f, 0.2f, 0.2f},
            {0.5f, 0.5f, 0.5f},
            {1.0f, 1.0f, 1.0f}};
+
+class EditModes {
+  public:
+    EditModes() {
+      m_colorMode = false;
+      m_removeMode = false;
+      m_addMode = false;
+    }
+    bool getColorMode() {
+      return m_colorMode;
+    }
+    bool getRemoveMode() {
+      return m_removeMode;
+    }
+    bool getAddMode() {
+      return m_addMode;
+    }
+    void changeColorMode() {
+      bool t_mode = m_colorMode;
+      resetModes();
+      m_colorMode = !t_mode;
+    }
+    void changeRemoveMode() {
+      bool t_mode = m_removeMode;
+      resetModes();
+      m_removeMode = !t_mode;
+    }
+  private:
+    void resetModes() {
+      m_colorMode = false;
+      m_removeMode = false;
+      m_addMode = false;
+    }
+    bool m_colorMode;
+    bool m_removeMode;
+    bool m_addMode;
+};
 
 class DebugDraw {
   public:
@@ -91,6 +129,7 @@ private:
   GLFWwindow *window;
   Camera *camera;
   Object *object;
+  EditModes *editModes;
 
   void initWindow() {
     glfwInit();
@@ -130,10 +169,11 @@ private:
   void initEngine() {  
     object = new Object();
     camera = new Camera();
+    editModes = new EditModes();
 
     camera->Position = glm::vec3(0.f, 0.f, 20.f);
     memset(frameTime, 0, sizeof(frameTime));
-    cubeMaterial = loadMaterial("files/ruby.mat");
+    cubeMaterial = loadMaterial("files/jade.mat");
   }
 
   void mainLoop() {
@@ -168,9 +208,9 @@ private:
     mvp.view = camera->GetViewMatrix();
     mvp.model = glm::mat4(1.f);
 
-    processInput();
+    processInput(mvp);
+
     object->draw(mvp, camera->Position, light);
-    object->checkRay(camera->Position, getRayCast(mvp.projection, mvp.view));
   }
 
   void drawGUI() {
@@ -182,6 +222,7 @@ private:
     lightPropertiesGUI();
     objectHandlingGUI();
     rayCastingInfoGUI();
+    editOptionsGUI();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -227,7 +268,16 @@ private:
     // ImGui::End();
   }
 
-  void processInput() {
+  void editOptionsGUI() {
+    ImGui::Begin("Edit Options");
+    if (ImGui::Button("Color mode"))
+      editModes->changeColorMode();
+    if (ImGui::Button("Remove mode"))
+      editModes->changeRemoveMode();
+    ImGui::End();
+  }
+
+  void processInput(MVP mvp) {
     //ESC to leave
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
       glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -256,6 +306,13 @@ private:
 
     //LMB handle the click
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+      Voxel* t_voxel = object->checkRay(camera->Position, getRayCast(mvp.projection, mvp.view));
+      if(t_voxel) {
+        if(editModes->getColorMode())
+          object->changeColor(t_voxel, cubeMaterial);
+        if(editModes->getRemoveMode())
+          object->removeVoxel(t_voxel);
+      }
       
     }
   }

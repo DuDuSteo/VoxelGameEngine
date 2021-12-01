@@ -122,7 +122,17 @@ void Object::addVoxel(glm::ivec3 pos, Material mat) {
     << t_voxel.mat.name << ")" << std::endl;
 }
 
-void Object::checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir) {
+void Object::changeColor(Voxel* voxel, Material mat) {
+    voxel->mat = mat;
+}
+
+void Object::removeVoxel(Voxel* voxel) {
+    glm::ivec3 t_pos = glm::ivec3(VOXEL_COUNT / 2 + voxel->pos.x, VOXEL_COUNT / 2 + voxel->pos.y, VOXEL_COUNT / 2 + voxel->pos.z);
+    m_hashVoxels[t_pos.x][t_pos.y][t_pos.z] = false;
+    m_voxels.erase(m_voxels.begin() + (voxel - &m_voxels.front()));
+}
+
+Voxel* Object::checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir) {
     // return pointer to hitVoxel
     Voxel* ray_hit = nullptr;
     float ray_distance = MAX_RAY_RANGE;
@@ -168,9 +178,11 @@ void Object::checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir) {
         }       
     }
     if(ray_distance == MAX_RAY_RANGE) {
-        std::cout << "missed" << std::endl;
+        //std::cout << "missed" << std::endl;
+        return nullptr;
     } else {
         std::cout << "(" << ray_hit->pos.x << ", " << ray_hit->pos.y << ", " << ray_hit->pos.z << ") at distance: " << ray_distance << std::endl;
+        return ray_hit;
     }
 }
 
