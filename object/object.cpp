@@ -3,7 +3,7 @@
 
 
 Object::Object() {
-    memset(m_hash_voxels, 0, sizeof(m_hash_voxels));
+    memset(m_hashVoxels, 0, sizeof(m_hashVoxels));
     loadVertexBuffer(m_vertices);
     loadIndexBuffer(m_indices);
 
@@ -49,35 +49,74 @@ void Object::draw(MVP mvp, glm::vec3 cameraPosition, Light light) {
 
     glm::mat4 objectModel = mvp.model;
 
+    glBindVertexArray(m_VAO);
+
     for (Voxel voxel : m_voxels) {
-      objectModel = glm::translate(mvp.model, voxel.pos);
-      m_shader.setMat4("model", objectModel);
-      m_shader.setVec3("material.ambient", voxel.mat.ambient);
-      m_shader.setVec3("material.diffuse", voxel.mat.diffuse);
-      m_shader.setVec3("material.specular", voxel.mat.specular);
-      m_shader.setFloat("material.shininess", voxel.mat.shininess * 128);
+        objectModel = glm::translate(mvp.model, voxel.pos);
+        m_shader.setMat4("model", objectModel);
+        m_shader.setVec3("material.ambient", voxel.mat.ambient);
+        m_shader.setVec3("material.diffuse", voxel.mat.diffuse);
+        m_shader.setVec3("material.specular", voxel.mat.specular);
+        m_shader.setFloat("material.shininess", voxel.mat.shininess * 128);
       
-      for (int start = 0; start < 31; start += 6) {
-        glBindVertexArray(m_VAO);   
-        glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT,
-                   (void *)(start * sizeof(uint32_t)));
-      }
+    //   for (int start = 0; start < 36; start += 6) {
+    //     // right, left, top, bot, front, back
+    //     glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT,
+    //                (void *)(start * sizeof(uint32_t)));
+    //   }
+        glm::ivec3 t_pos = glm::ivec3(VOXEL_COUNT / 2 + voxel.pos.x, VOXEL_COUNT / 2 + voxel.pos.y, VOXEL_COUNT / 2 + voxel.pos.z);
+        //right
+        if(t_pos.x + 1 <= VOXEL_COUNT)
+            if(m_hashVoxels[t_pos.x + 1][t_pos.y][t_pos.z] == false)
+                glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT, (void *)(0 * sizeof(uint32_t))); 
+        //left
+        if(t_pos.x - 1 >= 0)
+            if(m_hashVoxels[t_pos.x - 1][t_pos.y][t_pos.z] == false)
+                glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT, (void *)(6 * sizeof(uint32_t))); 
+        //top
+        if(t_pos.y + 1 <= VOXEL_COUNT)
+            if(m_hashVoxels[t_pos.x][t_pos.y + 1][t_pos.z] == false)
+                glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT, (void *)(12 * sizeof(uint32_t))); 
+        //bot
+        if(t_pos.y - 1 >= 0)
+            if(m_hashVoxels[t_pos.x][t_pos.y - 1][t_pos.z] == false)
+                glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT, (void *)(18 * sizeof(uint32_t))); 
+        //front
+        if(t_pos.z + 1 <= VOXEL_COUNT)
+            if(m_hashVoxels[t_pos.x][t_pos.y][t_pos.z + 1] == false)
+                glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT, (void *)(24 * sizeof(uint32_t))); 
+        //back
+        if(t_pos.z - 1 >= 0)
+            if(m_hashVoxels[t_pos.x][t_pos.y][t_pos.z - 1] == false)
+                glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT, (void *)(30 * sizeof(uint32_t)));  
     }
 
     return; }
 
 void Object::addVoxel(glm::ivec3 pos, Material mat) {
-    if(m_hash_voxels[VOXEL_COUNT / 2 + pos.x]
-                    [VOXEL_COUNT / 2 + pos.y]
-                    [VOXEL_COUNT / 2 + pos.z]){
+    glm::ivec3 t_pos = glm::ivec3(VOXEL_COUNT / 2 + pos.x, VOXEL_COUNT / 2 + pos.y, VOXEL_COUNT / 2 + pos.z);
+    if(t_pos.x < 0 || t_pos.x > VOXEL_COUNT) {
+        std::cout << "OBJECT::ADD_VOXEL::POS::X Out of bounds " << std::endl;
+        return;
+    }
+    if(t_pos.y < 0 || t_pos.y > VOXEL_COUNT) {
+        std::cout << "OBJECT::ADD_VOXEL::POS::Y Out of bounds " << std::endl;
+        return;
+    }
+    if(t_pos.z < 0 || t_pos.z > VOXEL_COUNT) {
+        std::cout << "OBJECT::ADD_VOXEL::POS::Z Out of bounds " << std::endl;
+        return;
+    }
+    if(m_hashVoxels[t_pos.x][t_pos.y][t_pos.z]){
         std::cout << "OBJECT::ADD_VOXEL Voxel already here" << std::endl;
         return;
     }
+
     Voxel t_voxel;
     t_voxel.pos = pos;
     t_voxel.mat = mat;
     m_voxels.push_back(t_voxel);
-    m_hash_voxels[VOXEL_COUNT / 2 + pos.x][VOXEL_COUNT / 2 + pos.y][VOXEL_COUNT / 2 + pos.z] = true;
+    m_hashVoxels[t_pos.x][t_pos.y][t_pos.z] = true;
     std::cout << "OBJECT::ADD_VOXEL (" << t_voxel.pos.x << ", " 
     << t_voxel.pos.y << ", " << t_voxel.pos.z << ") ("
     << t_voxel.mat.name << ")" << std::endl;

@@ -27,7 +27,7 @@ uint32_t m_VAO, m_VBO, m_EBO;
   std::vector<Vertex> m_vertices;
   std::vector<uint32_t> m_indices;
   std::vector<Voxel> m_voxels;
-  bool m_hash_voxels [VOXEL_COUNT][VOXEL_COUNT][VOXEL_COUNT];
+  bool m_hashVoxels [VOXEL_COUNT][VOXEL_COUNT][VOXEL_COUNT];
 };
 
 #endif
