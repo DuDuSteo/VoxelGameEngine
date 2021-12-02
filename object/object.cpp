@@ -90,8 +90,8 @@ void Object::draw(MVP mvp, glm::vec3 cameraPosition, Light light) {
             if(m_hashVoxels[t_pos.x][t_pos.y][t_pos.z - 1] == false)
                 glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT, (void *)(30 * sizeof(uint32_t)));  
     }
-
-    return; }
+    return; 
+}
 
 void Object::addVoxel(glm::ivec3 pos, Material mat) {
     glm::ivec3 t_pos = glm::ivec3(VOXEL_COUNT / 2 + pos.x, VOXEL_COUNT / 2 + pos.y, VOXEL_COUNT / 2 + pos.z);
@@ -137,10 +137,10 @@ void Object::removeVoxel(glm::vec3 pos) {
     glm::ivec3 t_pos = glm::ivec3(VOXEL_COUNT / 2 + pos.x, VOXEL_COUNT / 2 + pos.y, VOXEL_COUNT / 2 + pos.z);
     if(m_hashVoxels[t_pos.x][t_pos.y][t_pos.z] == true) {
         m_hashVoxels[t_pos.x][t_pos.y][t_pos.z] = false;
-        for(Voxel voxel : m_voxels) {
-            if(voxel.pos == pos) {
+        for(int i = 0; i < m_voxels.size(); i++) {
+            if(m_voxels[i].pos == pos) {
                 std::cout << "(" << pos.x << ", " << pos.y << ", " << pos.z << ") ";
-                m_voxels.erase(m_voxels.begin() + (&voxel - &m_voxels.front()));
+                m_voxels.erase(m_voxels.begin() + (&m_voxels[i] - &m_voxels.front()));
                 std::cout << "ERASED" << std::endl;
                 return;
             }

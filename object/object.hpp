@@ -8,9 +8,6 @@
 #include <cstring>
 #include <vector>
 
-#define VOXEL_COUNT 255
-#define MAX_RAY_RANGE 100.f
-
 #ifndef OBJECT_HPP
 #define OBJECT_HPP
 

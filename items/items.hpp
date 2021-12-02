@@ -16,6 +16,9 @@
 #define APPLICATION_NAME "Voxel Editor"
 #define FRAME_TIME_SIZE 60 * 20
 
+#define VOXEL_COUNT 255
+#define MAX_RAY_RANGE 100.f
+
 struct Vertex {
   glm::vec3 pos;
   glm::vec3 normals;
