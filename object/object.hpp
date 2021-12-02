@@ -21,6 +21,7 @@ public:
   void addVoxel(glm::ivec3 pos, Material mat);
   void changeColor(Voxel* voxel, Material mat);
   void removeVoxel(Voxel* voxel);
+  void removeVoxel(glm::vec3 pos);
   Voxel* checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir);
   std::vector<Voxel> getListOfVoxels();
 private:

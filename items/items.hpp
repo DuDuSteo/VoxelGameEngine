@@ -4,6 +4,18 @@
 #ifndef ITEMS_H
 #define ITEMS_H
 
+#define MATERIALS_LIST_FILE_NAME "material_list"
+
+#define FILES_PATH "files/"
+#define GLSL_FRAGMENT_FILE_EXTENSION ".frag"
+#define GLSL_VERTEX_FILE_EXTENSION ".vert"
+#define MATERIAL_FILE_EXTENSION ".mat"
+#define CONFIG_FILE_EXTENSION ".config"
+#define SCR_WIDTH 1280
+#define SCR_HEIGHT 720
+#define APPLICATION_NAME "VoxelGameEngine"
+#define FRAME_TIME_SIZE 60 * 20
+
 struct Vertex {
   glm::vec3 pos;
   glm::vec3 normals;

@@ -30,8 +30,8 @@ Object::Object() {
 
     glEnable(GL_DEPTH_TEST);
 
-    m_shader.init("files/basic.vert", "files/basic.frag");
-    addVoxel(glm::ivec3(0, 0, 0), loadMaterial("files/ruby.mat"));
+    m_shader.init("basic", "basic");
+    addVoxel(glm::ivec3(0, 0, 0), loadMaterial("ruby"));
 }
 
 void Object::draw(MVP mvp, glm::vec3 cameraPosition, Light light) { 
@@ -130,6 +130,30 @@ void Object::removeVoxel(Voxel* voxel) {
     glm::ivec3 t_pos = glm::ivec3(VOXEL_COUNT / 2 + voxel->pos.x, VOXEL_COUNT / 2 + voxel->pos.y, VOXEL_COUNT / 2 + voxel->pos.z);
     m_hashVoxels[t_pos.x][t_pos.y][t_pos.z] = false;
     m_voxels.erase(m_voxels.begin() + (voxel - &m_voxels.front()));
+}
+
+void Object::removeVoxel(glm::vec3 pos) {
+    std::cout << "OBJECT::REMOVE_VOXEL ";
+    glm::ivec3 t_pos = glm::ivec3(VOXEL_COUNT / 2 + pos.x, VOXEL_COUNT / 2 + pos.y, VOXEL_COUNT / 2 + pos.z);
+    if(m_hashVoxels[t_pos.x][t_pos.y][t_pos.z] == true) {
+        m_hashVoxels[t_pos.x][t_pos.y][t_pos.z] = false;
+        for(Voxel voxel : m_voxels) {
+            if(voxel.pos == pos) {
+                std::cout << "(" << pos.x << ", " << pos.y << ", " << pos.z << ") ";
+                m_voxels.erase(m_voxels.begin() + (&voxel - &m_voxels.front()));
+                std::cout << "ERASED" << std::endl;
+                return;
+            }
+        }
+    } else {
+        std::cout << "VOXEL_NOT_FOUND" << std::endl;
+        return;
+    }
+        
+    
+    
+    
+    
 }
 
 Voxel* Object::checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir) {

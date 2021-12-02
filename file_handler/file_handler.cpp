@@ -3,7 +3,7 @@
 #include <fstream>
 
 void saveBuffers(std::vector<Vertex> vert, std::vector<uint32_t> ind) {
-  std::ofstream file("files/vert_buffer.txt");
+  std::ofstream file(std::string(FILES_PATH) + std::string("vert_buffer.txt"));
   if (file.bad()) {
     std::cout << "FILE_HANDLER::SAVE_VERTEX_BUFFER::FILE_BAD" << std::endl;
     return;
@@ -15,7 +15,7 @@ void saveBuffers(std::vector<Vertex> vert, std::vector<uint32_t> ind) {
          << vert[i].normals.z << std::endl;
   }
   file.close();
-  file.open("files/ind_buffer.txt");
+  file.open(std::string(FILES_PATH) + std::string("ind_buffer.txt"));
   if (file.bad()) {
     std::cout << "FILE_HANDLER::SAVE_INDEX_BUFFER::FILE_BAD" << std::endl;
     return;
@@ -27,7 +27,7 @@ void saveBuffers(std::vector<Vertex> vert, std::vector<uint32_t> ind) {
 }
 
 void loadVertexBuffer(std::vector<Vertex> &vert) {
-  std::ifstream file("files/vert_buffer.txt");
+  std::ifstream file(std::string(FILES_PATH) + std::string("vert_buffer.txt"));
   if (file.bad()) {
     std::cout << "FILE_HANDLER::LOAD_VERTEX_BUFFER::FILE_BAD" << std::endl;
     return;
@@ -46,7 +46,7 @@ void loadVertexBuffer(std::vector<Vertex> &vert) {
 }
 
 void loadIndexBuffer(std::vector<uint32_t> &ind) {
-  std::ifstream file("files/ind_buffer.txt");
+  std::ifstream file(std::string(FILES_PATH) + std::string("ind_buffer.txt"));
   if (file.bad()) {
     std::cout << "FILE_HANDLER::LOAD_INDEX_BUFFER::FILE_BAD" << std::endl;
     return;

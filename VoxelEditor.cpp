@@ -12,6 +12,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <misc/cpp/imgui_stdlib.h>
 
 
 #include "material/material.hpp"
@@ -20,11 +21,6 @@
 #include "material/material.hpp"
 #include "object/object.hpp"
 #include "shader/shader.hpp"
-
-#define SCR_WIDTH 1280
-#define SCR_HEIGHT 720
-#define APPLICATION_NAME "VoxelGameEngine"
-#define FRAME_TIME_SIZE 60 * 20
 
 // Timings
 float currentFrame = 0;
@@ -48,40 +44,58 @@ class EditModes {
       m_removeMode = false;
       m_addMode = false;
     }
-    bool getColorMode() {
-      return m_colorMode;
+    bool getAddMode() {
+      return m_addMode;
     }
     bool getRemoveMode() {
       return m_removeMode;
     }
-    bool getAddMode() {
-      return m_addMode;
+    bool getColorMode() {
+      return m_colorMode;
     }
-    void changeColorMode() {
-      bool t_mode = m_colorMode;
+    void changeAddMode() {
+      bool t_mode = m_addMode;
       resetModes();
-      m_colorMode = !t_mode;
+      m_addMode = !t_mode;
     }
     void changeRemoveMode() {
       bool t_mode = m_removeMode;
       resetModes();
       m_removeMode = !t_mode;
     }
+    void changeColorMode() {
+      bool t_mode = m_colorMode;
+      resetModes();
+      m_colorMode = !t_mode;
+    }
+    void changeMode(int mode) {
+      switch(mode){
+        case 0:
+          changeAddMode();
+          break;
+        case 1:
+          changeRemoveMode();
+          break;
+        case 2:
+          changeColorMode();
+          break;
+      }   
+    } 
   private:
     void resetModes() {
       m_colorMode = false;
       m_removeMode = false;
       m_addMode = false;
     }
-    bool m_colorMode;
-    bool m_removeMode;
     bool m_addMode;
+    bool m_removeMode;
+    bool m_colorMode;
 };
 
 class DebugDraw {
   public:
     void init() {
-      m_shader.init("files/debug.vert", "files/debug.frag");
+      m_shader.init(std::string(FILES_PATH) + std::string("debug.vert"), std::string(FILES_PATH) + std::string("debug.frag"));
     }
     void drawLine(glm::vec3 start, glm::vec3 end, glm::mat4 projection, glm::mat4 view) {
       glm::mat4 model = glm::mat4(1.f);
@@ -130,6 +144,7 @@ private:
   Camera *camera;
   Object *object;
   EditModes *editModes;
+  std::vector<std::string> materials;
 
   void initWindow() {
     glfwInit();
@@ -170,10 +185,10 @@ private:
     object = new Object();
     camera = new Camera();
     editModes = new EditModes();
+    materials = loadMaterialNames();
 
     camera->Position = glm::vec3(0.f, 0.f, 20.f);
     memset(frameTime, 0, sizeof(frameTime));
-    cubeMaterial = loadMaterial("files/jade.mat");
   }
 
   void mainLoop() {
@@ -223,6 +238,8 @@ private:
     objectHandlingGUI();
     rayCastingInfoGUI();
     editOptionsGUI();
+    materialGUI();
+    ImGui::ShowDemoWindow();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -253,10 +270,13 @@ private:
 
   void objectHandlingGUI() {
     static glm::ivec3 pos = glm::ivec3(0, 0, 0);
-    ImGui::Begin("Object Handler");
+    ImGui::Begin("Voxel Handler");
     ImGui::InputInt3("Voxel Position", (int *)&pos);
     if(ImGui::Button("Add Voxel"))
       object->addVoxel(pos, cubeMaterial);
+    ImGui::SameLine();
+    if(ImGui::Button("Remove Voxel"))
+      object->removeVoxel(pos);
     ImGui::End();
   }
 
@@ -269,11 +289,64 @@ private:
   }
 
   void editOptionsGUI() {
-    ImGui::Begin("Edit Options");
-    if (ImGui::Button("Color mode"))
-      editModes->changeColorMode();
-    if (ImGui::Button("Remove mode"))
+    static int e = 0;
+
+    ImGui::Begin("Edit Modes");
+    if(ImGui::RadioButton("Add", &e, 0))
+      editModes->changeAddMode();
+    ImGui::SameLine();
+    if(ImGui::RadioButton("Remove", &e, 1))
       editModes->changeRemoveMode();
+    ImGui::SameLine();
+    if(ImGui::RadioButton("Color", &e, 2))
+      editModes->changeColorMode();    
+    ImGui::End();
+  }
+
+  void materialGUI(){
+
+    ImGui::Begin("Material");
+    static std::string current_item = materials[0];
+
+    ImGui::Text("Saved Materials");
+    if (ImGui::BeginCombo("List", current_item.c_str())) {
+      for (int n = 0; n < materials.size(); n++) {
+        bool is_selected = (current_item == materials[n]);
+        if (ImGui::Selectable(materials[n].c_str(), is_selected)) {     
+          current_item = materials[n];
+          if(cubeMaterial.name != current_item){}
+            cubeMaterial = loadMaterial(current_item);
+        }     
+        if (is_selected) 
+          ImGui::SetItemDefaultFocus(); 
+          
+      }
+    ImGui::EndCombo();
+    }
+    // if(ImGui::Button("Remove")) {
+    //   removeMaterial(cubeMaterial.name);
+    // }
+    ImGui::Text("Active Material Properties");
+    ImGui::InputText("Name", &cubeMaterial.name);
+    ImGui::ColorEdit3("Ambient" ,(float*)&cubeMaterial.ambient);
+    ImGui::ColorEdit3("Diffuse", (float*)&cubeMaterial.diffuse);
+		ImGui::ColorEdit3("Specular", (float*)&cubeMaterial.specular);
+    ImGui::SliderFloat("Shininess", &cubeMaterial.shininess, 0.f, 1.f);
+    if (ImGui::Button("Save")) {
+      bool t_edit = false;
+      for(std::string materialName : materials) {
+        if(materialName == cubeMaterial.name) {
+          t_edit = true;
+        }
+      }
+      saveMaterial(cubeMaterial, cubeMaterial.name, t_edit);
+      materials = loadMaterialNames();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Refresh")) {
+      materials = loadMaterialNames();
+    }
+
     ImGui::End();
   }
 

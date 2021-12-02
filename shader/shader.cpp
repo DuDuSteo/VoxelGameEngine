@@ -1,8 +1,8 @@
 #include "shader.hpp"
 
 void Shader::init(const std::string& vertFileName, const std::string& fragFileName) {
-	std::ifstream vertFile(vertFileName);
-	std::ifstream fragFile(fragFileName);
+	std::ifstream vertFile(std::string(FILES_PATH) + vertFileName + GLSL_VERTEX_FILE_EXTENSION);
+	std::ifstream fragFile(std::string(FILES_PATH) + fragFileName + GLSL_FRAGMENT_FILE_EXTENSION);
 	
 	if (vertFile.bad() || fragFile.bad())
 		std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;

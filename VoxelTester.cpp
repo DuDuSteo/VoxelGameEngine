@@ -48,7 +48,7 @@ int main()
     // build and compile our shader program
     // ------------------------------------
     Shader ourShader;
-    ourShader.init("files/3.3.shader.vs", "files/3.3.shader.fs"); // you can name your shader files however you like
+    ourShader.init(std::string(FILES_PATH) + "3.3.shader.vs", std::string(FILES_PATH) + "3.3.shader.fs"); // you can name your shader files however you like
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------

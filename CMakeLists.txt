@@ -25,7 +25,8 @@ set(IMGUI_SOURCES
     ${IMGUI_DIR}/imgui_draw.cpp 
     ${IMGUI_DIR}/imgui_demo.cpp 
     ${IMGUI_DIR}/imgui_tables.cpp 
-    ${IMGUI_DIR}/imgui_widgets.cpp)
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SOURCES})
 
