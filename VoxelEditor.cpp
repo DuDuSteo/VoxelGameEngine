@@ -30,8 +30,6 @@ float frameTime[FRAME_TIME_SIZE];
 bool wireVisible = false;
 bool colorMode = true;
 
-
-Material cubeMaterial;
 Light light = {{0.f, 0.f, -1.f},
            {0.2f, 0.2f, 0.2f},
            {0.5f, 0.5f, 0.5f},
@@ -40,9 +38,9 @@ Light light = {{0.f, 0.f, -1.f},
 class EditModes {
   public:
     EditModes() {
-      m_colorMode = false;
+      m_addMode = true;
       m_removeMode = false;
-      m_addMode = false;
+      m_colorMode = false;
     }
     bool getAddMode() {
       return m_addMode;
@@ -83,9 +81,9 @@ class EditModes {
     } 
   private:
     void resetModes() {
-      m_colorMode = false;
-      m_removeMode = false;
       m_addMode = false;
+      m_removeMode = false;
+      m_colorMode = false;    
     }
     bool m_addMode;
     bool m_removeMode;
@@ -145,6 +143,7 @@ private:
   Object *object;
   EditModes *editModes;
   std::vector<std::string> materials;
+  Material activeMaterial;
 
   void initWindow() {
     glfwInit();
@@ -273,7 +272,7 @@ private:
     ImGui::Begin("Voxel Handler");
     ImGui::InputInt3("Voxel Position", (int *)&pos);
     if(ImGui::Button("Add Voxel"))
-      object->addVoxel(pos, cubeMaterial);
+      object->addVoxel(pos, activeMaterial);
     ImGui::SameLine();
     if(ImGui::Button("Remove Voxel"))
       object->removeVoxel(pos);
@@ -314,8 +313,8 @@ private:
         bool is_selected = (current_item == materials[n]);
         if (ImGui::Selectable(materials[n].c_str(), is_selected)) {     
           current_item = materials[n];
-          if(cubeMaterial.name != current_item){}
-            cubeMaterial = loadMaterial(current_item);
+          if(activeMaterial.name != current_item){}
+            activeMaterial = loadMaterial(current_item);
         }     
         if (is_selected) 
           ImGui::SetItemDefaultFocus(); 
@@ -324,22 +323,22 @@ private:
     ImGui::EndCombo();
     }
     // if(ImGui::Button("Remove")) {
-    //   removeMaterial(cubeMaterial.name);
+    //   removeMaterial(activeMaterial.name);
     // }
     ImGui::Text("Active Material Properties");
-    ImGui::InputText("Name", &cubeMaterial.name);
-    ImGui::ColorEdit3("Ambient" ,(float*)&cubeMaterial.ambient);
-    ImGui::ColorEdit3("Diffuse", (float*)&cubeMaterial.diffuse);
-		ImGui::ColorEdit3("Specular", (float*)&cubeMaterial.specular);
-    ImGui::SliderFloat("Shininess", &cubeMaterial.shininess, 0.f, 1.f);
+    ImGui::InputText("Name", &activeMaterial.name);
+    ImGui::ColorEdit3("Ambient" ,(float*)&activeMaterial.ambient);
+    ImGui::ColorEdit3("Diffuse", (float*)&activeMaterial.diffuse);
+		ImGui::ColorEdit3("Specular", (float*)&activeMaterial.specular);
+    ImGui::SliderFloat("Shininess", &activeMaterial.shininess, 0.f, 1.f);
     if (ImGui::Button("Save")) {
       bool t_edit = false;
       for(std::string materialName : materials) {
-        if(materialName == cubeMaterial.name) {
+        if(materialName == activeMaterial.name) {
           t_edit = true;
         }
       }
-      saveMaterial(cubeMaterial, cubeMaterial.name, t_edit);
+      saveMaterial(activeMaterial, activeMaterial.name, t_edit);
       materials = loadMaterialNames();
     }
     ImGui::SameLine();
@@ -382,9 +381,11 @@ private:
       Voxel* t_voxel = object->checkRay(camera->Position, getRayCast(mvp.projection, mvp.view));
       if(t_voxel) {
         if(editModes->getColorMode())
-          object->changeColor(t_voxel, cubeMaterial);
+          object->changeColor(t_voxel, activeMaterial);
         if(editModes->getRemoveMode())
           object->removeVoxel(t_voxel);
+        if(editModes->getAddMode())
+          std::cout << "ADD_VOXEL" << std::endl;
       }
       
     }
