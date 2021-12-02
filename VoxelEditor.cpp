@@ -142,6 +142,7 @@ private:
   Camera *camera;
   Object *object;
   EditModes *editModes;
+  glm::vec4 backgroundColor = {1.f, 1.f, 1.f, 1.f};
   std::vector<std::string> materials;
   Material activeMaterial;
 
@@ -185,6 +186,7 @@ private:
     camera = new Camera();
     editModes = new EditModes();
     materials = loadMaterialNames();
+    activeMaterial = loadMaterial(materials[0]);
 
     camera->Position = glm::vec3(0.f, 0.f, 20.f);
     memset(frameTime, 0, sizeof(frameTime));
@@ -207,8 +209,7 @@ private:
       frameTime[i - 1] = frameTime[i];
     }
     frameTime[FRAME_TIME_SIZE - 1] = deltaTime * 1000;
-
-    glClearColor(1.f, 1.f, 1.f, 1.0f);
+    glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (wireVisible) {
@@ -233,7 +234,7 @@ private:
     ImGui::NewFrame();
 
     debugInfoGUI();
-    lightPropertiesGUI();
+    scenePropertiesGUI();
     objectHandlingGUI();
     rayCastingInfoGUI();
     editOptionsGUI();
@@ -258,12 +259,15 @@ private:
     ImGui::End();
   }
 
-  void lightPropertiesGUI() {
-    ImGui::Begin("Light Properties");
+  void scenePropertiesGUI() {
+    ImGui::Begin("Scene Properties");
+    ImGui::Text("Background");
+    ImGui::ColorEdit4("Color", (float*)&backgroundColor);
+    ImGui::Text("Light");
     ImGui::SliderFloat3("Direction", (float *)&light.direction, -1.f, 1.f);
-    ImGui::SliderFloat3("Light Ambient", (float *)&light.ambient, 0.f, 1.f);
-    ImGui::SliderFloat3("Light Diffuse", (float *)&light.diffuse, 0.f, 1.f);
-    ImGui::SliderFloat3("Light Specular", (float *)&light.specular, 0.f, 1.f);
+    ImGui::SliderFloat3("Ambient", (float *)&light.ambient, 0.f, 1.f);
+    ImGui::SliderFloat3("Diffuse", (float *)&light.diffuse, 0.f, 1.f);
+    ImGui::SliderFloat3("Specular", (float *)&light.specular, 0.f, 1.f);
     ImGui::End();
   }
 

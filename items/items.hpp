@@ -13,7 +13,7 @@
 #define CONFIG_FILE_EXTENSION ".config"
 #define SCR_WIDTH 1280
 #define SCR_HEIGHT 720
-#define APPLICATION_NAME "VoxelGameEngine"
+#define APPLICATION_NAME "Voxel Editor"
 #define FRAME_TIME_SIZE 60 * 20
 
 struct Vertex {
