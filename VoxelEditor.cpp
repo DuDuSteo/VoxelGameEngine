@@ -141,6 +141,7 @@ private:
   GLFWwindow *window;
   Camera *camera;
   Object *object;
+  MVP mvp;
   EditModes *editModes;
   glm::vec4 backgroundColor = {1.f, 1.f, 1.f, 1.f};
   std::vector<std::string> materials;
@@ -162,6 +163,7 @@ private:
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetWindowUserPointer(window, this);
     glfwSetScrollCallback(window, scroll_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetCursorPos(window, SCR_WIDTH / 2, SCR_HEIGHT / 2);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -217,13 +219,12 @@ private:
     } else
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    MVP mvp;
     mvp.projection = glm::perspective(
         glm::radians(45.f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.f);
     mvp.view = camera->GetViewMatrix();
     mvp.model = glm::mat4(1.f);
 
-    processInput(mvp);
+    processInput();
 
     object->draw(mvp, camera->Position, light);
   }
@@ -353,7 +354,7 @@ private:
     ImGui::End();
   }
 
-  void processInput(MVP mvp) {
+  void processInput() {
     //ESC to leave
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
       glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -382,15 +383,7 @@ private:
 
     //LMB handle the click
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-      Voxel* t_voxel = object->checkRay(camera->Position, getRayCast(mvp.projection, mvp.view));
-      if(t_voxel) {
-        if(editModes->getColorMode())
-          object->changeColor(t_voxel, activeMaterial);
-        if(editModes->getRemoveMode())
-          object->removeVoxel(t_voxel);
-        if(editModes->getAddMode())
-          std::cout << "ADD_VOXEL" << std::endl;
-      }
+      
       
     }
   }
@@ -419,6 +412,22 @@ private:
         static_cast<VoxelGameEngine *>(glfwGetWindowUserPointer(window));
     voxelGame->camera->ProcessMouseScroll((float)yoffset, deltaTime);
   }
+
+  inline static auto mouse_button_callback(GLFWwindow* window, int button, int action, int mods) -> void {
+    VoxelGameEngine *voxelGame =
+        static_cast<VoxelGameEngine *>(glfwGetWindowUserPointer(window));
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+      Voxel* t_voxel = voxelGame->object->checkRay(voxelGame->camera->Position, voxelGame->getRayCast(voxelGame->mvp.projection, voxelGame->mvp.view));
+      if(t_voxel) {
+        if(voxelGame->editModes->getColorMode())
+          voxelGame->object->changeColor(t_voxel, voxelGame->activeMaterial);
+        if(voxelGame->editModes->getRemoveMode())
+          voxelGame->object->removeVoxel(t_voxel);
+        if(voxelGame->editModes->getAddMode())
+          std::cout << "ADD_VOXEL" << std::endl;
+      }
+    }
+}
 };
 
 int main() {

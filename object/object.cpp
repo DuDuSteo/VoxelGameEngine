@@ -148,12 +148,7 @@ void Object::removeVoxel(glm::vec3 pos) {
     } else {
         std::cout << "VOXEL_NOT_FOUND" << std::endl;
         return;
-    }
-        
-    
-    
-    
-    
+    }   
 }
 
 Voxel* Object::checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir) {
