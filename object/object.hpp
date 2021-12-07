@@ -11,6 +11,8 @@
 #ifndef OBJECT_HPP
 #define OBJECT_HPP
 
+
+
 class Object {
 public:
   Object();
@@ -22,7 +24,8 @@ public:
   void reset();
   void save();
   void load(std::string objectPath);
-  Voxel* checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir);
+  Voxel* checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir, glm::vec3& newBlockLoc);
+  glm::vec3 getFace(Voxel* voxel, glm::vec3 ray_origin, glm::vec3 ray_dir);
   std::vector<Voxel> getListOfVoxels();
 
   std::string name;

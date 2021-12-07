@@ -11,7 +11,6 @@ set(SOURCES
     ${PROJECT_SOURCE_DIR}/camera/camera.cpp 
     ${PROJECT_SOURCE_DIR}/material/material.cpp 
     ${PROJECT_SOURCE_DIR}/file_handler/file_handler.cpp 
-    ${PROJECT_SOURCE_DIR}/console_log/console_log.cpp 
 )
 
 #imgui

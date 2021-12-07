@@ -189,24 +189,32 @@ void Object::load(std::string objectPath) {
     return;
 }
 
-Voxel* Object::checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir) {
+Voxel* Object::checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir, glm::vec3& newBlockLoc) {
     // return pointer to hitVoxel
     Voxel* ray_hit = nullptr;
     float ray_distance = MAX_RAY_RANGE;
+    int ray_axis;
 
     for (int i = 0; i < m_voxels.size(); i++) {
         glm::vec3 max = m_voxels[i].pos + glm::vec3(0.5f);
         glm::vec3 min = m_voxels[i].pos - glm::vec3(0.5f);
 
         float tmin = (min.x - ray_origin.x) / ray_dir.x; 
+        float t1 = tmin;
         float tmax = (max.x - ray_origin.x) / ray_dir.x; 
-    
+        float t2 = tmax;
+
         if (tmin > tmax) std::swap(tmin, tmax); 
     
         float tymin = (min.y - ray_origin.y) / ray_dir.y; 
+        float t3 = tymin;
         float tymax = (max.y - ray_origin.y) / ray_dir.y; 
+        float t4 = tymax;
     
         if (tymin > tymax) std::swap(tymin, tymax); 
+
+        if ((tmin > tymax) || (tymin > tmax)) 
+            continue;
 
         if (tymin > tmin) 
             tmin = tymin; 
@@ -215,32 +223,86 @@ Voxel* Object::checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir) {
             tmax = tymax;      
     
         float tzmin = (min.z - ray_origin.z) / ray_dir.z; 
+        float t5 = tzmin;
         float tzmax = (max.z - ray_origin.z) / ray_dir.z; 
+        float t6 = tzmax;
     
         if (tzmin > tzmax) std::swap(tzmin, tzmax); 
-    
+
+        if ((tmin > tzmax) || (tzmin > tmax)) 
+            continue;
+
         if (tzmin > tmin) 
             tmin = tzmin; 
     
         if (tzmax < tmax) 
-            tmax = tzmax;     
-        if(!( ((tmin > tymax) || (tymin > tmax)) || ((tmin > tzmax) || (tzmin > tmax)) )) {
-            float distance = sqrt(pow(m_voxels[i].pos.x - ray_origin.x, 2) +
-                            pow(m_voxels[i].pos.y - ray_origin.y, 2) +
-                            pow(m_voxels[i].pos.z - ray_origin.z, 2));
-            if(distance < ray_distance) {
-                ray_hit = &m_voxels[i];
-                ray_distance = distance;
-            }   
-        }       
+            tmax = tzmax;  
+
+        float distance = glm::distance(m_voxels[i].pos, ray_origin);
+
+        if(distance < ray_distance) {
+            float t_tminx = fmin(t1, t2);
+            float t_tminy = fmin(t3, t4);
+            float t_tmin = fmax(fmax(t_tminx, t_tminy), fmin(t5, t6));
+            ray_axis = 2;
+            if (t_tmin == t_tminx) ray_axis = 0;
+            if (t_tmin == t_tminy) ray_axis = 1;
+
+            ray_hit = &m_voxels[i];
+            ray_distance = distance;
+            
+        }         
     }
     if(ray_distance == MAX_RAY_RANGE) {
-        //std::cout << "missed" << std::endl;
         return nullptr;
     } else {
+        if (ray_axis == 2) {
+            if(ray_origin.z - ray_hit->pos.z > 0)
+                newBlockLoc.z = 1.f;
+            else newBlockLoc.z = -1.f;
+        } else if (ray_axis == 1) {
+            if(ray_origin.y - ray_hit->pos.y > 0)
+                newBlockLoc.y = 1.f;
+            else newBlockLoc.y = -1.f;
+        } else if (ray_axis == 0) {
+            if(ray_origin.x - ray_hit->pos.x > 0)
+                newBlockLoc.x = 1.f;
+            else newBlockLoc.x = -1.f;
+        }
         std::cout << "(" << ray_hit->pos.x << ", " << ray_hit->pos.y << ", " << ray_hit->pos.z << ") at distance: " << ray_distance << std::endl;
         return ray_hit;
     }
+}
+
+glm::vec3 Object::getFace(Voxel* voxel, glm::vec3 ray_origin, glm::vec3 ray_dir) {
+    glm::vec3 normalFaces[] = {
+        {0.f, 0.f, 1.f}, // front
+        {0.f, 0.f, -1.f}, // back
+        {1.f, 0.f, 0.f}, // right
+        {-1.f, 0.f, 0.f}, // left
+        {0.f, 1.f, 0.f}, // top
+        {0.f, -1.f, 0.f} // bot
+    };
+    // l0-origin l-direction p0-point n-normal p-point
+    glm::vec3 closestFace = glm::vec3(0.f);
+    float distance = MAX_RAY_RANGE;
+    for(glm::vec3 faceNormal : normalFaces) {
+        float denom = glm::dot((faceNormal * -1.f), ray_dir);
+        if(fabs(denom) > 1e-6) {
+            glm::vec3 t_vec = (voxel->pos + (faceNormal * 0.5f)) - ray_origin;
+            float t = glm::dot(t_vec, (faceNormal * -1.f)) / denom;
+            if(t >= 0) {
+                //std::cout << faceNormal.x << " " << faceNormal.y << " " << faceNormal.z << std::endl;
+                if(t < distance){
+                    closestFace = faceNormal;
+                    distance = t;
+                }
+                    
+            }
+            
+        }
+    }
+    return closestFace;
 }
 
 std::vector<Voxel> Object::getListOfVoxels(){

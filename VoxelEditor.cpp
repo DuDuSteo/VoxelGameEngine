@@ -431,14 +431,18 @@ private:
     VoxelGameEngine *voxelGame =
         static_cast<VoxelGameEngine *>(glfwGetWindowUserPointer(window));
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-      Voxel* t_voxel = voxelGame->object->checkRay(voxelGame->camera->Position, voxelGame->getRayCast(voxelGame->mvp.projection, voxelGame->mvp.view));
+      glm::vec3 ray_origin = voxelGame->camera->Position;
+      glm::vec3 ray_dir = voxelGame->getRayCast(voxelGame->mvp.projection, voxelGame->mvp.view);
+      glm::vec3 newBlockLoc = glm::vec3(0.f);
+      Voxel* t_voxel = voxelGame->object->checkRay(ray_origin, ray_dir, newBlockLoc);
       if(t_voxel) {
         if(voxelGame->stateHandler->getColorMode())
           voxelGame->object->changeColor(t_voxel, loadMaterial(voxelGame->activeMaterialName));
         if(voxelGame->stateHandler->getRemoveMode())
           voxelGame->object->removeVoxel(t_voxel);
-        if(voxelGame->stateHandler->getAddMode())
-          std::cout << "ADD_VOXEL" << std::endl;
+        if(voxelGame->stateHandler->getAddMode()) {
+          voxelGame->object->addVoxel(t_voxel->pos + newBlockLoc, loadMaterial(voxelGame->activeMaterialName));
+        }
       }
     }
 }
