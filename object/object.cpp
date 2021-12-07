@@ -3,6 +3,7 @@
 
 
 Object::Object() {
+    name = "new_object";
     memset(m_hashVoxels, 0, sizeof(m_hashVoxels));
     loadVertexBuffer(m_vertices);
     loadIndexBuffer(m_indices);
@@ -59,11 +60,6 @@ void Object::draw(MVP mvp, glm::vec3 cameraPosition, Light light) {
         m_shader.setVec3("material.specular", voxel.mat.specular);
         m_shader.setFloat("material.shininess", voxel.mat.shininess * 128);
       
-    //   for (int start = 0; start < 36; start += 6) {
-    //     // right, left, top, bot, front, back
-    //     glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT,
-    //                (void *)(start * sizeof(uint32_t)));
-    //   }
         glm::ivec3 t_pos = glm::ivec3(VOXEL_COUNT / 2 + voxel.pos.x, VOXEL_COUNT / 2 + voxel.pos.y, VOXEL_COUNT / 2 + voxel.pos.z);
         //right
         if(t_pos.x + 1 <= VOXEL_COUNT)
@@ -149,6 +145,48 @@ void Object::removeVoxel(glm::vec3 pos) {
         std::cout << "VOXEL_NOT_FOUND" << std::endl;
         return;
     }   
+}
+void Object::reset() {
+    std::cout << "OBJECT::RESET " << name << " ";
+    name = "new_object";
+    memset(m_hashVoxels, 0, sizeof(m_hashVoxels));
+    m_voxels.clear();
+    std::cout << std::endl;
+}
+
+void Object::save() {
+    std::cout << "OBJECT::SAVE " << std::string(FILES_PATH) + name + std::string(VOXEL_FILE_EXTENSION) << " ";
+    std::ofstream file(std::string(FILES_PATH) + name + std::string(VOXEL_FILE_EXTENSION));
+    if (file.bad() || file.fail()) {
+        std::cout << "FILE_BAD" << std::endl;
+        return;
+    }
+    for (Voxel voxel : m_voxels) {      
+        file << voxel.pos.x << " " << voxel.pos.y << " " << voxel.pos.z << " " << voxel.mat.name << std::endl;
+    }
+    file.close();
+    std::cout << std::endl;
+    return; 
+}
+
+void Object::load(std::string objectPath) {
+    std::cout << "OBJECT::LOAD " << objectPath << " ";
+    std::ifstream file(objectPath);
+    if (file.bad() || file.fail()) {
+        std::cout << "FILE_BAD" << std::endl;
+        return;
+    }
+    reset();
+    glm::ivec3 t_pos;
+    std::string t_matName;
+    while(!file.eof()){
+        file >> t_pos.x;
+        file >> t_pos.y;
+        file >> t_pos.z;
+        file >> t_matName;
+        addVoxel(t_pos, loadMaterial(t_matName));
+    }
+    return;
 }
 
 Voxel* Object::checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir) {

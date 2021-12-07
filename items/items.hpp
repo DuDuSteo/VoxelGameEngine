@@ -10,6 +10,7 @@
 #define GLSL_FRAGMENT_FILE_EXTENSION ".frag"
 #define GLSL_VERTEX_FILE_EXTENSION ".vert"
 #define MATERIAL_FILE_EXTENSION ".mat"
+#define VOXEL_FILE_EXTENSION ".vxl"
 #define CONFIG_FILE_EXTENSION ".config"
 #define SCR_WIDTH 1280
 #define SCR_HEIGHT 720

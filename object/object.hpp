@@ -19,10 +19,15 @@ public:
   void changeColor(Voxel* voxel, Material mat);
   void removeVoxel(Voxel* voxel);
   void removeVoxel(glm::vec3 pos);
+  void reset();
+  void save();
+  void load(std::string objectPath);
   Voxel* checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir);
   std::vector<Voxel> getListOfVoxels();
+
+  std::string name;
 private:
-uint32_t m_VAO, m_VBO, m_EBO;
+  uint32_t m_VAO, m_VBO, m_EBO;
   Shader m_shader;
   std::vector<Vertex> m_vertices;
   std::vector<uint32_t> m_indices;

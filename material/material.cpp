@@ -5,7 +5,7 @@ void saveMaterial(Material mat, const std::string& matName, bool edit) {
 	std::string matPath = std::string(FILES_PATH) + matName + MATERIAL_FILE_EXTENSION;
 	std::cout << matPath << " ";
 	std::ofstream file(matPath);
-	if (file.bad()) {
+	if (file.bad() || file.fail()) {
 		std::cout << "FILE_BAD" << std::endl;
 		return;
 	}
@@ -23,7 +23,7 @@ void saveMaterial(Material mat, const std::string& matName, bool edit) {
 		matPath = std::string(FILES_PATH) + MATERIALS_LIST_FILE_NAME + CONFIG_FILE_EXTENSION;
 		std::cout << matPath << " ";
 		file.open(matPath, std::ios_base::app);
-		if (file.bad()) {
+		if (file.bad() || file.fail()) {
 			std::cout << "FILE_BAD" << std::endl;
 			return;
 		}
@@ -50,7 +50,7 @@ Material loadMaterial(const std::string& matName) {
 	std::cout << "MATERIAL::LOAD_MATERIAL ";
 	std::cout << std::string(FILES_PATH) + matName + MATERIAL_FILE_EXTENSION << " ";
 	std::ifstream file(std::string(FILES_PATH) + matName + MATERIAL_FILE_EXTENSION);
-	if (file.bad()) {
+	if (file.bad() || file.fail()) {
 		std::cout << "FILE_BAD" << std::endl;
 	}
 	Material t_mat;
@@ -72,7 +72,7 @@ std::vector<std::string> loadMaterialNames() {
 	std::vector<std::string> t_materialNames;
 	std::cout << std::string(FILES_PATH) + MATERIALS_LIST_FILE_NAME + CONFIG_FILE_EXTENSION << " ";
 	std::ifstream file(std::string(FILES_PATH) + MATERIALS_LIST_FILE_NAME + CONFIG_FILE_EXTENSION);
-	if (file.bad()) {
+	if (file.bad() || file.fail()) {
 		std::cout << "FILE_BAD" << std::endl;
 		return t_materialNames;
 	}
@@ -94,7 +94,7 @@ std::vector<Material> loadMaterialsfromFile() {
 	std::vector<Material> t_materials;
 	std::cout << std::string(FILES_PATH) + MATERIALS_LIST_FILE_NAME + CONFIG_FILE_EXTENSION << " ";
 	std::ifstream file(std::string(FILES_PATH) + MATERIALS_LIST_FILE_NAME + CONFIG_FILE_EXTENSION);
-	if (file.bad()) {
+	if (file.bad() || file.fail()) {
 		std::cout << "FILE_BAD" << std::endl;
 		return t_materials;
 	}

@@ -35,12 +35,18 @@ Light light = {{0.f, 0.f, -1.f},
            {0.5f, 0.5f, 0.5f},
            {1.0f, 1.0f, 1.0f}};
 
-class EditModes {
+class StateHandler {
   public:
-    EditModes() {
+    StateHandler() {
       m_addMode = true;
       m_removeMode = false;
       m_colorMode = false;
+      sceneWindow = false;
+      materialWindow = false;
+      debugWindow = false;
+      objectWindow = false;
+      saveAsWindow = false;
+      OpenModelWindow = false;
     }
     bool getAddMode() {
       return m_addMode;
@@ -79,6 +85,12 @@ class EditModes {
           break;
       }   
     } 
+    bool sceneWindow;
+    bool materialWindow;
+    bool debugWindow;
+    bool objectWindow;
+    bool saveAsWindow;
+    bool OpenModelWindow;
   private:
     void resetModes() {
       m_addMode = false;
@@ -88,44 +100,6 @@ class EditModes {
     bool m_addMode;
     bool m_removeMode;
     bool m_colorMode;
-};
-
-class DebugDraw {
-  public:
-    void init() {
-      m_shader.init(std::string(FILES_PATH) + std::string("debug.vert"), std::string(FILES_PATH) + std::string("debug.frag"));
-    }
-    void drawLine(glm::vec3 start, glm::vec3 end, glm::mat4 projection, glm::mat4 view) {
-      glm::mat4 model = glm::mat4(1.f);
-
-      glGenVertexArrays(1, &m_VAO);
-      glBindVertexArray(m_VAO); 
-
-      glGenBuffers(1, &m_VBO);
-      std::vector<glm::vec3> t_vertices;
-      t_vertices.push_back(end);
-      t_vertices.push_back(end + glm::vec3(1.f, 0.f, 0.f));
-      
-
-      glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(t_vertices), &t_vertices.front(), GL_STATIC_DRAW);
-
-      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-      glEnableVertexAttribArray(0);
-
-      m_shader.use();
-      m_shader.setVec3("color", glm::vec3(1.f, 0.f, 0.f));
-      m_shader.setMat4("projection", projection);
-      m_shader.setMat4("view", view);
-      m_shader.setMat4("model", model);
-
-      glDrawArrays(GL_LINE_STRIP, 0, t_vertices.size()); 
-
-      glBindVertexArray(0); 
-    }
-  private:
-    uint32_t m_VBO, m_VAO;
-    Shader m_shader;
 };
 
 class VoxelGameEngine {
@@ -142,10 +116,10 @@ private:
   Camera *camera;
   Object *object;
   MVP mvp;
-  EditModes *editModes;
-  glm::vec4 backgroundColor = {1.f, 1.f, 1.f, 1.f};
+  StateHandler *stateHandler;
+  glm::vec4 backgroundColor = {0.2f, 0.2f, 0.2f, 1.f};
+  std::string activeMaterialName;
   std::vector<std::string> materials;
-  Material activeMaterial;
 
   void initWindow() {
     glfwInit();
@@ -171,8 +145,6 @@ private:
       glfwTerminate();
     }
 
-    // Imgui init
-
     IMGUI_CHECKVERSION();
 
     ImGui::CreateContext();
@@ -186,9 +158,9 @@ private:
   void initEngine() {  
     object = new Object();
     camera = new Camera();
-    editModes = new EditModes();
+    stateHandler = new StateHandler();
     materials = loadMaterialNames();
-    activeMaterial = loadMaterial(materials[0]);
+    activeMaterialName = materials[0];
 
     camera->Position = glm::vec3(0.f, 0.f, 20.f);
     memset(frameTime, 0, sizeof(frameTime));
@@ -234,12 +206,20 @@ private:
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    debugInfoGUI();
-    scenePropertiesGUI();
-    objectHandlingGUI();
-    rayCastingInfoGUI();
+    menuGUI();
+    if(stateHandler->debugWindow)
+      debugGUI();
+    if(stateHandler->sceneWindow)
+      sceneGUI();
+    if(stateHandler->objectWindow)
+      objectGUI();
     editOptionsGUI();
-    materialGUI();
+    if(stateHandler->materialWindow)
+      materialGUI();
+    if(stateHandler->saveAsWindow)
+      saveAsGUI();
+    if(stateHandler->OpenModelWindow)
+      openModelGUI();
     ImGui::ShowDemoWindow();
 
     ImGui::Render();
@@ -251,8 +231,8 @@ private:
     glfwTerminate();
   }
 
-  void debugInfoGUI() {
-    ImGui::Begin("Debug Info");
+  void debugGUI() {
+    ImGui::Begin("Debug", &stateHandler->debugWindow);
     if (ImGui::Button("WireFrame mode"))
       wireVisible ^= true;
     ImGui::PlotHistogram("", frameTime, IM_ARRAYSIZE(frameTime), 0, NULL, 0.0f,
@@ -260,8 +240,8 @@ private:
     ImGui::End();
   }
 
-  void scenePropertiesGUI() {
-    ImGui::Begin("Scene Properties");
+  void sceneGUI() {
+    ImGui::Begin("Scene", &stateHandler->sceneWindow);
     ImGui::Text("Background");
     ImGui::ColorEdit4("Color", (float*)&backgroundColor);
     ImGui::Text("Light");
@@ -272,24 +252,69 @@ private:
     ImGui::End();
   }
 
-  void objectHandlingGUI() {
-    static glm::ivec3 pos = glm::ivec3(0, 0, 0);
-    ImGui::Begin("Voxel Handler");
-    ImGui::InputInt3("Voxel Position", (int *)&pos);
-    if(ImGui::Button("Add Voxel"))
-      object->addVoxel(pos, activeMaterial);
+  void menuGUI() {
+    if(ImGui::BeginMainMenuBar()) {
+      if(ImGui::BeginMenu("File")) {
+        if(ImGui::MenuItem("New Model")) {
+          object->reset();
+          object->addVoxel(glm::ivec3(0, 0, 0), loadMaterial("ruby"));
+        }
+        ImGui::MenuItem("Open Model", "", &stateHandler->OpenModelWindow); 
+        ImGui::MenuItem("Save As", "", &stateHandler->saveAsWindow);
+        ImGui::EndMenu();
+      }
+
+      if(ImGui::BeginMenu("Window")) {
+        ImGui::MenuItem("Scene", "", &stateHandler->sceneWindow);
+        ImGui::MenuItem("Material", "", &stateHandler->materialWindow);
+        ImGui::MenuItem("Debug", "", &stateHandler->debugWindow);
+        ImGui::MenuItem("Object", "", &stateHandler->objectWindow);
+        ImGui::EndMenu();
+      }
+      ImGui::EndMainMenuBar();
+    }
+  }
+
+  void saveAsGUI() {
+    ImGui::Begin("Save As", &stateHandler->saveAsWindow);
+    ImGui::InputText("Name", &object->name);
+    if(ImGui::Button("Save")) {
+      stateHandler->saveAsWindow = false;
+      object->save();
+    }
     ImGui::SameLine();
-    if(ImGui::Button("Remove Voxel"))
-      object->removeVoxel(pos);
+    if(ImGui::Button("Cancel")) {
+      stateHandler->saveAsWindow = false;
+    }
     ImGui::End();
   }
 
-  void rayCastingInfoGUI() {
-    // ImGui::Begin("Ray Casting Info");
-    // ImGui::InputFloat3("Ray Position", (float *)&mouse_ray);
-    // ImGui::InputFloat3("Camera Position", (float *)&camera->Position);
-    // ImGui::InputFloat("Ray Length", &raycastLength);
-    // ImGui::End();
+  void openModelGUI() {
+    ImGui::Begin("Open Model", &stateHandler->OpenModelWindow);
+    static std::string loadName = std::string(FILES_PATH) + object->name + std::string(VOXEL_FILE_EXTENSION);
+    ImGui::InputText("Path", &loadName);
+    if(ImGui::Button("Open")) {
+      stateHandler->OpenModelWindow = false;
+      object->load(loadName);
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("Cancel")) {
+      stateHandler->OpenModelWindow = false;
+    }
+    ImGui::End();
+  }
+
+
+  void objectGUI() {
+    static glm::ivec3 pos = glm::ivec3(0, 0, 0);
+    ImGui::Begin("Voxel Handler", &stateHandler->objectWindow);
+    ImGui::InputInt3("Voxel Position", (int *)&pos);
+    if(ImGui::Button("Add Voxel"))
+      object->addVoxel(pos, loadMaterial(activeMaterialName));
+    ImGui::SameLine();
+    if(ImGui::Button("Remove Voxel"))
+      object->removeVoxel(pos);      
+    ImGui::End();
   }
 
   void editOptionsGUI() {
@@ -297,29 +322,27 @@ private:
 
     ImGui::Begin("Edit Modes");
     if(ImGui::RadioButton("Add", &e, 0))
-      editModes->changeAddMode();
+      stateHandler->changeAddMode();
     ImGui::SameLine();
     if(ImGui::RadioButton("Remove", &e, 1))
-      editModes->changeRemoveMode();
+      stateHandler->changeRemoveMode();
     ImGui::SameLine();
     if(ImGui::RadioButton("Color", &e, 2))
-      editModes->changeColorMode();    
+      stateHandler->changeColorMode();    
     ImGui::End();
   }
 
   void materialGUI(){
-
-    ImGui::Begin("Material");
-    static std::string current_item = materials[0];
-
+    ImGui::Begin("Material", &stateHandler->materialWindow);
+    static Material newMaterial;
     ImGui::Text("Saved Materials");
-    if (ImGui::BeginCombo("List", current_item.c_str())) {
+    if (ImGui::BeginCombo("List", activeMaterialName.c_str())) {
       for (int n = 0; n < materials.size(); n++) {
-        bool is_selected = (current_item == materials[n]);
+        bool is_selected = (activeMaterialName == materials[n]);
         if (ImGui::Selectable(materials[n].c_str(), is_selected)) {     
-          current_item = materials[n];
-          if(activeMaterial.name != current_item){}
-            activeMaterial = loadMaterial(current_item);
+          activeMaterialName = materials[n];
+          if(newMaterial.name != activeMaterialName){}
+            newMaterial = loadMaterial(activeMaterialName);
         }     
         if (is_selected) 
           ImGui::SetItemDefaultFocus(); 
@@ -327,23 +350,20 @@ private:
       }
     ImGui::EndCombo();
     }
-    // if(ImGui::Button("Remove")) {
-    //   removeMaterial(activeMaterial.name);
-    // }
-    ImGui::Text("Active Material Properties");
-    ImGui::InputText("Name", &activeMaterial.name);
-    ImGui::ColorEdit3("Ambient" ,(float*)&activeMaterial.ambient);
-    ImGui::ColorEdit3("Diffuse", (float*)&activeMaterial.diffuse);
-		ImGui::ColorEdit3("Specular", (float*)&activeMaterial.specular);
-    ImGui::SliderFloat("Shininess", &activeMaterial.shininess, 0.f, 1.f);
+    ImGui::Text("Create Material");
+    ImGui::InputText("Name", &newMaterial.name);
+    ImGui::ColorEdit3("Ambient" ,(float*)&newMaterial.ambient);
+    ImGui::ColorEdit3("Diffuse", (float*)&newMaterial.diffuse);
+		ImGui::ColorEdit3("Specular", (float*)&newMaterial.specular);
+    ImGui::SliderFloat("Shininess", &newMaterial.shininess, 0.f, 1.f);
     if (ImGui::Button("Save")) {
       bool t_edit = false;
       for(std::string materialName : materials) {
-        if(materialName == activeMaterial.name) {
+        if(materialName == newMaterial.name) {
           t_edit = true;
         }
       }
-      saveMaterial(activeMaterial, activeMaterial.name, t_edit);
+      saveMaterial(newMaterial, newMaterial.name, t_edit);
       materials = loadMaterialNames();
     }
     ImGui::SameLine();
@@ -380,12 +400,6 @@ private:
         blockedCamera = false;
     } else if (!blockedCamera)
       blockedCamera = true;
-
-    //LMB handle the click
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-      
-      
-    }
   }
 
   glm::vec2 getScreenPos() {
@@ -419,11 +433,11 @@ private:
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
       Voxel* t_voxel = voxelGame->object->checkRay(voxelGame->camera->Position, voxelGame->getRayCast(voxelGame->mvp.projection, voxelGame->mvp.view));
       if(t_voxel) {
-        if(voxelGame->editModes->getColorMode())
-          voxelGame->object->changeColor(t_voxel, voxelGame->activeMaterial);
-        if(voxelGame->editModes->getRemoveMode())
+        if(voxelGame->stateHandler->getColorMode())
+          voxelGame->object->changeColor(t_voxel, loadMaterial(voxelGame->activeMaterialName));
+        if(voxelGame->stateHandler->getRemoveMode())
           voxelGame->object->removeVoxel(t_voxel);
-        if(voxelGame->editModes->getAddMode())
+        if(voxelGame->stateHandler->getAddMode())
           std::cout << "ADD_VOXEL" << std::endl;
       }
     }
