@@ -20,35 +20,46 @@
 #define VOXEL_COUNT 255
 #define MAX_RAY_RANGE 100.f
 
-struct Vertex {
+struct Vertex
+{
   glm::vec3 pos;
   glm::vec3 normals;
 };
 
-struct Material {
-	std::string name;
-	glm::vec3 ambient;
-	glm::vec3 diffuse;
-	glm::vec3 specular;
-	float shininess;
+struct Material
+{
+  std::string name;
+  glm::vec3 ambient;
+  glm::vec3 diffuse;
+  glm::vec3 specular;
+  float shininess;
 };
 
-struct Voxel {
+struct Voxel
+{
   glm::vec3 pos;
   Material mat;
 };
 
-struct MVP {
+struct MVP
+{
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 projection;
 };
 
-enum class BlockFace {
-	Top, Bottom, Front, Back, Right, Left
+enum class BlockFace
+{
+  Top,
+  Bottom,
+  Front,
+  Back,
+  Right,
+  Left
 };
 
-struct Light {
+struct Light
+{
   glm::vec3 direction;
   glm::vec3 ambient;
   glm::vec3 diffuse;

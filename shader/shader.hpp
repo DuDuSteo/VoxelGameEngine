@@ -10,7 +10,8 @@
 #ifndef SHADER_HPP
 #define SHADER_HPP
 
-class Shader {
+class Shader
+{
 public:
   void init(const std::string &vertFileName, const std::string &fragFileName);
 

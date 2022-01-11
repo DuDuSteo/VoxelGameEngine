@@ -7,11 +7,11 @@
 #ifndef MATERIAL_HPP
 #define MATERIAL_HPP
 
-void saveMaterial(Material mat, const std::string& matName, bool edit = false);
+void saveMaterial(Material mat, const std::string &matName, bool edit = false);
 
-void removeMaterial(const std::string& matName);
+void removeMaterial(const std::string &matName);
 
-Material loadMaterial(const std::string& matName);
+Material loadMaterial(const std::string &matName);
 
 std::vector<std::string> loadMaterialNames();
 

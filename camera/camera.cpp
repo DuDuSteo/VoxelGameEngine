@@ -1,6 +1,5 @@
 #include "camera.hpp"
 
-
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
 {
     Position = position;
@@ -24,7 +23,8 @@ glm::mat4 Camera::GetViewMatrix()
     return glm::lookAt(Position, Position + Front, Up);
 }
 
-void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
+void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
+{
     float velocity = MovementSpeed * deltaTime;
     if (direction == Camera_Movement::FORWARD)
         Position += Front * velocity;
@@ -40,8 +40,10 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
         Position -= Up * velocity;
 }
 
-void Camera::ProcessKeyboard(float xpos, float ypos, float deltaTime, bool firstMouse) {
-    if (firstMouse) {
+void Camera::ProcessKeyboard(float xpos, float ypos, float deltaTime, bool firstMouse)
+{
+    if (firstMouse)
+    {
         lastX = xpos;
         lastY = ypos;
     }
@@ -60,13 +62,14 @@ void Camera::ProcessKeyboard(float xpos, float ypos, float deltaTime, bool first
 
 void Camera::ProcessMouseMovement(float xpos, float ypos, bool firstMouse, bool constrainPitch)
 {
-    if (firstMouse) {
+    if (firstMouse)
+    {
         lastX = xpos;
         lastY = ypos;
     }
 
     float xoffset = xpos - lastX;
-    float yoffset = lastY -ypos;
+    float yoffset = lastY - ypos;
 
     lastX = xpos;
     lastY = ypos;
@@ -90,13 +93,14 @@ void Camera::ProcessMouseMovement(float xpos, float ypos, bool firstMouse, bool 
     updateCameraVectors();
 }
 
-void Camera::ProcessMouseScroll(float yoffset, float deltaTime) {
+void Camera::ProcessMouseScroll(float yoffset, float deltaTime)
+{
     float velocity = deltaTime * MovementSpeed * 100.f;
     Position += Front * yoffset * velocity;
-
 }
 
-void Camera::updateCameraVectors() {
+void Camera::updateCameraVectors()
+{
     // calculate the new Front vector
     glm::vec3 front;
     front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
@@ -104,6 +108,6 @@ void Camera::updateCameraVectors() {
     front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
     Front = glm::normalize(front);
     // also re-calculate the Right and Up vector
-    Right = glm::normalize(glm::cross(Front, WorldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+    Right = glm::normalize(glm::cross(Front, WorldUp)); // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
     Up = glm::normalize(glm::cross(Right, Front));
 }

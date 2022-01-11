@@ -10,9 +10,18 @@ const float SPEED = 1.f;
 const float SENSITIVITY = 0.1f;
 const float ZOOM = 45.0f;
 
-enum class Camera_Movement { FORWARD, BACKWARD, LEFT, RIGHT, UP, DOWN };
+enum class Camera_Movement
+{
+  FORWARD,
+  BACKWARD,
+  LEFT,
+  RIGHT,
+  UP,
+  DOWN
+};
 
-class Camera {
+class Camera
+{
 public:
   glm::vec3 Position;
   glm::vec3 Front;
