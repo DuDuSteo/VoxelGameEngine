@@ -49,34 +49,34 @@ public:
     saveAsWindow = false;
     OpenModelWindow = false;
   }
-  bool getAddMode()
+  bool GetAddMode()
   {
     return m_addMode;
   }
-  bool getRemoveMode()
+  bool GetRemoveMode()
   {
     return m_removeMode;
   }
-  bool getColorMode()
+  bool GetColorMode()
   {
     return m_colorMode;
   }
-  void changeAddMode()
+  void ChangeAddMode()
   {
     bool t_mode = m_addMode;
-    resetModes();
+    ResetModes();
     m_addMode = !t_mode;
   }
-  void changeRemoveMode()
+  void ChangeRemoveMode()
   {
     bool t_mode = m_removeMode;
-    resetModes();
+    ResetModes();
     m_removeMode = !t_mode;
   }
-  void changeColorMode()
+  void ChangeColorMode()
   {
     bool t_mode = m_colorMode;
-    resetModes();
+    ResetModes();
     m_colorMode = !t_mode;
   }
   void changeMode(int mode)
@@ -84,13 +84,13 @@ public:
     switch (mode)
     {
     case 0:
-      changeAddMode();
+      ChangeAddMode();
       break;
     case 1:
-      changeRemoveMode();
+      ChangeRemoveMode();
       break;
     case 2:
-      changeColorMode();
+      ChangeColorMode();
       break;
     }
   }
@@ -102,7 +102,7 @@ public:
   bool OpenModelWindow;
 
 private:
-  void resetModes()
+  void ResetModes()
   {
     m_addMode = false;
     m_removeMode = false;
@@ -221,7 +221,7 @@ private:
 
     processInput();
 
-    object->draw(mvp, camera->Position, light);
+    object->Draw(mvp, camera->Position, light);
   }
 
   void drawGUI()
@@ -286,8 +286,8 @@ private:
       {
         if (ImGui::MenuItem("New Model"))
         {
-          object->reset();
-          object->addVoxel(glm::ivec3(0, 0, 0), loadMaterial("ruby"));
+          object->Reset();
+          object->AddVoxel(glm::ivec3(0, 0, 0), loadMaterial("ruby"));
         }
         ImGui::MenuItem("Open Model", "", &stateHandler->OpenModelWindow);
         ImGui::MenuItem("Save As", "", &stateHandler->saveAsWindow);
@@ -313,7 +313,7 @@ private:
     if (ImGui::Button("Save"))
     {
       stateHandler->saveAsWindow = false;
-      object->save();
+      object->Save();
     }
     ImGui::SameLine();
     if (ImGui::Button("Cancel"))
@@ -331,7 +331,7 @@ private:
     if (ImGui::Button("Open"))
     {
       stateHandler->OpenModelWindow = false;
-      object->load(loadName);
+      object->Load(loadName);
     }
     ImGui::SameLine();
     if (ImGui::Button("Cancel"))
@@ -347,10 +347,10 @@ private:
     ImGui::Begin("Voxel Handler", &stateHandler->objectWindow);
     ImGui::InputInt3("Voxel Position", (int *)&pos);
     if (ImGui::Button("Add Voxel"))
-      object->addVoxel(pos, loadMaterial(activeMaterialName));
+      object->AddVoxel(pos, loadMaterial(activeMaterialName));
     ImGui::SameLine();
     if (ImGui::Button("Remove Voxel"))
-      object->removeVoxel(pos);
+      object->RemoveVoxel(pos);
     ImGui::End();
   }
 
@@ -360,13 +360,13 @@ private:
 
     ImGui::Begin("Edit Modes");
     if (ImGui::RadioButton("Add", &e, 0))
-      stateHandler->changeAddMode();
+      stateHandler->ChangeAddMode();
     ImGui::SameLine();
     if (ImGui::RadioButton("Remove", &e, 1))
-      stateHandler->changeRemoveMode();
+      stateHandler->ChangeRemoveMode();
     ImGui::SameLine();
     if (ImGui::RadioButton("Color", &e, 2))
-      stateHandler->changeColorMode();
+      stateHandler->ChangeColorMode();
     ImGui::End();
   }
 
@@ -491,16 +491,16 @@ private:
       glm::vec3 ray_origin = voxelGame->camera->Position;
       glm::vec3 ray_dir = voxelGame->getRayCast(voxelGame->mvp.projection, voxelGame->mvp.view);
       glm::vec3 newBlockLoc = glm::vec3(0.f);
-      Voxel *t_voxel = voxelGame->object->checkRay(ray_origin, ray_dir, newBlockLoc);
+      Voxel *t_voxel = voxelGame->object->CheckRay(ray_origin, ray_dir, newBlockLoc);
       if (t_voxel)
       {
-        if (voxelGame->stateHandler->getColorMode())
-          voxelGame->object->changeColor(t_voxel, loadMaterial(voxelGame->activeMaterialName));
-        if (voxelGame->stateHandler->getRemoveMode())
-          voxelGame->object->removeVoxel(t_voxel);
-        if (voxelGame->stateHandler->getAddMode())
+        if (voxelGame->stateHandler->GetColorMode())
+          voxelGame->object->ChangeColor(t_voxel, loadMaterial(voxelGame->activeMaterialName));
+        if (voxelGame->stateHandler->GetRemoveMode())
+          voxelGame->object->RemoveVoxel(t_voxel);
+        if (voxelGame->stateHandler->GetAddMode())
         {
-          voxelGame->object->addVoxel(t_voxel->pos + newBlockLoc, loadMaterial(voxelGame->activeMaterialName));
+          voxelGame->object->AddVoxel(t_voxel->pos + newBlockLoc, loadMaterial(voxelGame->activeMaterialName));
         }
       }
     }

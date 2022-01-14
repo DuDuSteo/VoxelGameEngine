@@ -30,23 +30,23 @@ Object::Object()
 
     glEnable(GL_DEPTH_TEST);
 
-    m_shader.init("basic", "basic");
-    addVoxel(glm::ivec3(0, 0, 0), loadMaterial("ruby"));
+    m_shader.Init("basic", "basic");
+    AddVoxel(glm::ivec3(0, 0, 0), loadMaterial("ruby"));
 }
 
-void Object::draw(MVP mvp, glm::vec3 cameraPosition, Light light)
+void Object::Draw(MVP mvp, glm::vec3 cameraPosition, Light light)
 {
-    m_shader.use();
+    m_shader.Use();
 
-    m_shader.setVec3("viewPos", cameraPosition);
+    m_shader.SetVec3("viewPos", cameraPosition);
 
-    m_shader.setVec3("light.direction", light.direction);
-    m_shader.setVec3("light.ambient", light.ambient);
-    m_shader.setVec3("light.diffuse", light.diffuse);
-    m_shader.setVec3("light.specular", light.specular);
+    m_shader.SetVec3("light.direction", light.direction);
+    m_shader.SetVec3("light.ambient", light.ambient);
+    m_shader.SetVec3("light.diffuse", light.diffuse);
+    m_shader.SetVec3("light.specular", light.specular);
 
-    m_shader.setMat4("projection", mvp.projection);
-    m_shader.setMat4("view", mvp.view);
+    m_shader.SetMat4("projection", mvp.projection);
+    m_shader.SetMat4("view", mvp.view);
 
     glm::mat4 objectModel = mvp.model;
 
@@ -55,11 +55,11 @@ void Object::draw(MVP mvp, glm::vec3 cameraPosition, Light light)
     for (Voxel voxel : m_voxels)
     {
         objectModel = glm::translate(mvp.model, voxel.pos);
-        m_shader.setMat4("model", objectModel);
-        m_shader.setVec3("material.ambient", voxel.mat.ambient);
-        m_shader.setVec3("material.diffuse", voxel.mat.diffuse);
-        m_shader.setVec3("material.specular", voxel.mat.specular);
-        m_shader.setFloat("material.shininess", voxel.mat.shininess * 128);
+        m_shader.SetMat4("model", objectModel);
+        m_shader.SetVec3("material.ambient", voxel.mat.ambient);
+        m_shader.SetVec3("material.diffuse", voxel.mat.diffuse);
+        m_shader.SetVec3("material.specular", voxel.mat.specular);
+        m_shader.SetFloat("material.shininess", voxel.mat.shininess * 128);
 
         glm::ivec3 t_pos = glm::ivec3(VOXEL_COUNT / 2 + voxel.pos.x, VOXEL_COUNT / 2 + voxel.pos.y, VOXEL_COUNT / 2 + voxel.pos.z);
         //right
@@ -90,7 +90,7 @@ void Object::draw(MVP mvp, glm::vec3 cameraPosition, Light light)
     return;
 }
 
-void Object::addVoxel(glm::ivec3 pos, Material mat)
+void Object::AddVoxel(glm::ivec3 pos, Material mat)
 {
     glm::ivec3 t_pos = glm::ivec3(VOXEL_COUNT / 2 + pos.x, VOXEL_COUNT / 2 + pos.y, VOXEL_COUNT / 2 + pos.z);
     if (t_pos.x < 0 || t_pos.x > VOXEL_COUNT)
@@ -124,19 +124,19 @@ void Object::addVoxel(glm::ivec3 pos, Material mat)
               << t_voxel.mat.name << ")" << std::endl;
 }
 
-void Object::changeColor(Voxel *voxel, Material mat)
+void Object::ChangeColor(Voxel *voxel, Material mat)
 {
     voxel->mat = mat;
 }
 
-void Object::removeVoxel(Voxel *voxel)
+void Object::RemoveVoxel(Voxel *voxel)
 {
     glm::ivec3 t_pos = glm::ivec3(VOXEL_COUNT / 2 + voxel->pos.x, VOXEL_COUNT / 2 + voxel->pos.y, VOXEL_COUNT / 2 + voxel->pos.z);
     m_hashVoxels[t_pos.x][t_pos.y][t_pos.z] = false;
     m_voxels.erase(m_voxels.begin() + (voxel - &m_voxels.front()));
 }
 
-void Object::removeVoxel(glm::vec3 pos)
+void Object::RemoveVoxel(glm::vec3 pos)
 {
     std::cout << "OBJECT::REMOVE_VOXEL ";
     glm::ivec3 t_pos = glm::ivec3(VOXEL_COUNT / 2 + pos.x, VOXEL_COUNT / 2 + pos.y, VOXEL_COUNT / 2 + pos.z);
@@ -160,7 +160,7 @@ void Object::removeVoxel(glm::vec3 pos)
         return;
     }
 }
-void Object::reset()
+void Object::Reset()
 {
     std::cout << "OBJECT::RESET " << name << " ";
     name = "new_object";
@@ -169,7 +169,7 @@ void Object::reset()
     std::cout << std::endl;
 }
 
-void Object::save()
+void Object::Save()
 {
     std::cout << "OBJECT::SAVE " << std::string(FILES_PATH) + name + std::string(VOXEL_FILE_EXTENSION) << " ";
     std::ofstream file(std::string(FILES_PATH) + name + std::string(VOXEL_FILE_EXTENSION));
@@ -187,7 +187,7 @@ void Object::save()
     return;
 }
 
-void Object::load(std::string objectPath)
+void Object::Load(std::string objectPath)
 {
     std::cout << "OBJECT::LOAD " << objectPath << " ";
     std::ifstream file(objectPath);
@@ -196,7 +196,7 @@ void Object::load(std::string objectPath)
         std::cout << "FILE_BAD" << std::endl;
         return;
     }
-    reset();
+    Reset();
     glm::ivec3 t_pos;
     std::string t_matName;
     while (!file.eof())
@@ -205,12 +205,12 @@ void Object::load(std::string objectPath)
         file >> t_pos.y;
         file >> t_pos.z;
         file >> t_matName;
-        addVoxel(t_pos, loadMaterial(t_matName));
+        AddVoxel(t_pos, loadMaterial(t_matName));
     }
     return;
 }
 
-Voxel *Object::checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir, glm::vec3 &newBlockLoc)
+Voxel *Object::CheckRay(glm::vec3 ray_origin, glm::vec3 ray_dir, glm::vec3 &newBlockLoc)
 {
     // return pointer to hitVoxel
     Voxel *ray_hit = nullptr;
@@ -313,41 +313,7 @@ Voxel *Object::checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir, glm::vec3 &newB
     }
 }
 
-glm::vec3 Object::getFace(Voxel *voxel, glm::vec3 ray_origin, glm::vec3 ray_dir)
-{
-    glm::vec3 normalFaces[] = {
-        {0.f, 0.f, 1.f},  // front
-        {0.f, 0.f, -1.f}, // back
-        {1.f, 0.f, 0.f},  // right
-        {-1.f, 0.f, 0.f}, // left
-        {0.f, 1.f, 0.f},  // top
-        {0.f, -1.f, 0.f}  // bot
-    };
-    // l0-origin l-direction p0-point n-normal p-point
-    glm::vec3 closestFace = glm::vec3(0.f);
-    float distance = MAX_RAY_RANGE;
-    for (glm::vec3 faceNormal : normalFaces)
-    {
-        float denom = glm::dot((faceNormal * -1.f), ray_dir);
-        if (fabs(denom) > 1e-6)
-        {
-            glm::vec3 t_vec = (voxel->pos + (faceNormal * 0.5f)) - ray_origin;
-            float t = glm::dot(t_vec, (faceNormal * -1.f)) / denom;
-            if (t >= 0)
-            {
-                //std::cout << faceNormal.x << " " << faceNormal.y << " " << faceNormal.z << std::endl;
-                if (t < distance)
-                {
-                    closestFace = faceNormal;
-                    distance = t;
-                }
-            }
-        }
-    }
-    return closestFace;
-}
-
-std::vector<Voxel> Object::getListOfVoxels()
+std::vector<Voxel> Object::GetListOfVoxels()
 {
     return m_voxels;
 }

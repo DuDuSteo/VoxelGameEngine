@@ -13,13 +13,13 @@
 class Shader
 {
 public:
-  void init(const std::string &vertFileName, const std::string &fragFileName);
+  void Init(const std::string &vertFileName, const std::string &fragFileName);
 
-  void use();
-  void setMat4(const std::string &name, const glm::mat4 &mat) const;
-  void setVec3(const std::string &name, const glm::vec3 &vec) const;
-  void setVec4(const std::string &name, const glm::vec4 &vec) const;
-  void setFloat(const std::string &name, const float &value) const;
+  void Use();
+  void SetMat4(const std::string &name, const glm::mat4 &mat) const;
+  void SetVec3(const std::string &name, const glm::vec3 &vec) const;
+  void SetVec4(const std::string &name, const glm::vec4 &vec) const;
+  void SetFloat(const std::string &name, const float &value) const;
 
 private:
   uint32_t shaderID;

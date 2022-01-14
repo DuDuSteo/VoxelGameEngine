@@ -15,17 +15,16 @@ class Object
 {
 public:
   Object();
-  void draw(MVP mvp, glm::vec3 cameraPosition, Light light);
-  void addVoxel(glm::ivec3 pos, Material mat);
-  void changeColor(Voxel *voxel, Material mat);
-  void removeVoxel(Voxel *voxel);
-  void removeVoxel(glm::vec3 pos);
-  void reset();
-  void save();
-  void load(std::string objectPath);
-  Voxel *checkRay(glm::vec3 ray_origin, glm::vec3 ray_dir, glm::vec3 &newBlockLoc);
-  glm::vec3 getFace(Voxel *voxel, glm::vec3 ray_origin, glm::vec3 ray_dir);
-  std::vector<Voxel> getListOfVoxels();
+  void Draw(MVP mvp, glm::vec3 cameraPosition, Light light);
+  void AddVoxel(glm::ivec3 pos, Material mat);
+  void ChangeColor(Voxel *voxel, Material mat);
+  void RemoveVoxel(Voxel *voxel);
+  void RemoveVoxel(glm::vec3 pos);
+  void Reset();
+  void Save();
+  void Load(std::string objectPath);
+  Voxel *CheckRay(glm::vec3 ray_origin, glm::vec3 ray_dir, glm::vec3 &newBlockLoc);
+  std::vector<Voxel> GetListOfVoxels();
 
   std::string name;
 

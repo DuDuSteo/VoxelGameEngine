@@ -1,6 +1,6 @@
 #include "shader.hpp"
 
-void Shader::init(const std::string &vertFileName, const std::string &fragFileName)
+void Shader::Init(const std::string &vertFileName, const std::string &fragFileName)
 {
     std::ifstream vertFile(std::string(FILES_PATH) + vertFileName + GLSL_VERTEX_FILE_EXTENSION);
     std::ifstream fragFile(std::string(FILES_PATH) + fragFileName + GLSL_FRAGMENT_FILE_EXTENSION);
@@ -44,27 +44,27 @@ void Shader::init(const std::string &vertFileName, const std::string &fragFileNa
     glDeleteShader(frag);
 }
 
-void Shader::use()
+void Shader::Use()
 {
     glUseProgram(shaderID);
 }
 
-void Shader::setMat4(const std::string &name, const glm::mat4 &mat) const
+void Shader::SetMat4(const std::string &name, const glm::mat4 &mat) const
 {
     glUniformMatrix4fv(glGetUniformLocation(shaderID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
 
-void Shader::setVec3(const std::string &name, const glm::vec3 &vec) const
+void Shader::SetVec3(const std::string &name, const glm::vec3 &vec) const
 {
     glUniform3fv(glGetUniformLocation(shaderID, name.c_str()), 1, &vec[0]);
 }
 
-void Shader::setVec4(const std::string &name, const glm::vec4 &vec) const
+void Shader::SetVec4(const std::string &name, const glm::vec4 &vec) const
 {
     glUniform4fv(glGetUniformLocation(shaderID, name.c_str()), 1, &vec[0]);
 }
 
-void Shader::setFloat(const std::string &name, const float &value) const
+void Shader::SetFloat(const std::string &name, const float &value) const
 {
     glUniform1f(glGetUniformLocation(shaderID, name.c_str()), value);
 }
