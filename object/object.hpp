@@ -15,7 +15,7 @@ class Object
 {
 public:
   Object();
-  void Draw(MVP mvp, glm::vec3 cameraPosition, Light light);
+  void Draw(MVP mvp, glm::vec3 cameraPosition, Light light, bool optimizedMode);
   void AddVoxel(glm::ivec3 pos, Material mat);
   void ChangeColor(Voxel *voxel, Material mat);
   void RemoveVoxel(Voxel *voxel);

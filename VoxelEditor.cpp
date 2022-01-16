@@ -28,6 +28,7 @@ float lastFrame = 0;
 float frameTime[FRAME_TIME_SIZE];
 bool wireVisible = false;
 bool colorMode = true;
+bool optimizedMode = true;
 
 Light light = {{0.f, 0.f, -1.f},
                {0.2f, 0.2f, 0.2f},
@@ -78,21 +79,6 @@ public:
     bool t_mode = m_colorMode;
     ResetModes();
     m_colorMode = !t_mode;
-  }
-  void changeMode(int mode)
-  {
-    switch (mode)
-    {
-    case 0:
-      ChangeAddMode();
-      break;
-    case 1:
-      ChangeRemoveMode();
-      break;
-    case 2:
-      ChangeColorMode();
-      break;
-    }
   }
   bool sceneWindow;
   bool materialWindow;
@@ -221,7 +207,7 @@ private:
 
     processInput();
 
-    object->Draw(mvp, camera->Position, light);
+    object->Draw(mvp, camera->Position, light, optimizedMode);
   }
 
   void drawGUI()
@@ -260,6 +246,8 @@ private:
     ImGui::Begin("Debug", &stateHandler->debugWindow);
     if (ImGui::Button("WireFrame mode"))
       wireVisible ^= true;
+    if (ImGui::Button("Optimized mode"))
+      optimizedMode ^= true;
     ImGui::PlotHistogram("", frameTime, IM_ARRAYSIZE(frameTime), 0, NULL, 0.0f,
                          16.f, ImVec2(200, 80));
     ImGui::End();

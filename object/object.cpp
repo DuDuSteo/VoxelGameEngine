@@ -34,7 +34,7 @@ Object::Object()
     AddVoxel(glm::ivec3(0, 0, 0), loadMaterial("ruby"));
 }
 
-void Object::Draw(MVP mvp, glm::vec3 cameraPosition, Light light)
+void Object::Draw(MVP mvp, glm::vec3 cameraPosition, Light light, bool optimizedMode)
 {
     m_shader.Use();
 
@@ -64,27 +64,27 @@ void Object::Draw(MVP mvp, glm::vec3 cameraPosition, Light light)
         glm::ivec3 t_pos = glm::ivec3(VOXEL_COUNT / 2 + voxel.pos.x, VOXEL_COUNT / 2 + voxel.pos.y, VOXEL_COUNT / 2 + voxel.pos.z);
         //right
         if (t_pos.x + 1 <= VOXEL_COUNT)
-            if (m_hashVoxels[t_pos.x + 1][t_pos.y][t_pos.z] == false)
+            if (m_hashVoxels[t_pos.x + 1][t_pos.y][t_pos.z] == false || optimizedMode)
                 glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT, (void *)(0 * sizeof(uint32_t)));
         //left
         if (t_pos.x - 1 >= 0)
-            if (m_hashVoxels[t_pos.x - 1][t_pos.y][t_pos.z] == false)
+            if (m_hashVoxels[t_pos.x - 1][t_pos.y][t_pos.z] == false || optimizedMode)
                 glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT, (void *)(6 * sizeof(uint32_t)));
         //top
         if (t_pos.y + 1 <= VOXEL_COUNT)
-            if (m_hashVoxels[t_pos.x][t_pos.y + 1][t_pos.z] == false)
+            if (m_hashVoxels[t_pos.x][t_pos.y + 1][t_pos.z] == false || optimizedMode)
                 glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT, (void *)(12 * sizeof(uint32_t)));
         //bot
         if (t_pos.y - 1 >= 0)
-            if (m_hashVoxels[t_pos.x][t_pos.y - 1][t_pos.z] == false)
+            if (m_hashVoxels[t_pos.x][t_pos.y - 1][t_pos.z] == false || optimizedMode)
                 glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT, (void *)(18 * sizeof(uint32_t)));
         //front
         if (t_pos.z + 1 <= VOXEL_COUNT)
-            if (m_hashVoxels[t_pos.x][t_pos.y][t_pos.z + 1] == false)
+            if (m_hashVoxels[t_pos.x][t_pos.y][t_pos.z + 1] == false || optimizedMode)
                 glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT, (void *)(24 * sizeof(uint32_t)));
         //back
         if (t_pos.z - 1 >= 0)
-            if (m_hashVoxels[t_pos.x][t_pos.y][t_pos.z - 1] == false)
+            if (m_hashVoxels[t_pos.x][t_pos.y][t_pos.z - 1] == false || optimizedMode)
                 glDrawElements(GL_TRIANGLES, (GLsizei)36 / 6, GL_UNSIGNED_INT, (void *)(30 * sizeof(uint32_t)));
     }
     return;
