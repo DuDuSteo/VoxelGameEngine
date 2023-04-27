@@ -6,4 +6,7 @@ C++ / OpenGL / GLSL
 
 Libraries: Dear ImGui, glm, GLFW, glad (in folder libs/)
 
-![alt text](https://scontent-fra5-2.xx.fbcdn.net/v/t39.30808-6/339599920_123572933965935_5727553917757626948_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=5cd70e&_nc_ohc=BJZITY5vYD4AX-YViri&_nc_ht=scontent-fra5-2.xx&oh=00_AfCeaaa1wjuoGCB_MyZjcl5BgJCW5ewF_vxRBJXD9wUmqA&oe=64462656)
+Link to thesis: https://github.com/DuDuSteo/VoxelEngineerThesis
+
+Preview:
+![image](https://user-images.githubusercontent.com/30495650/234971285-f81e2ab0-4b00-4f87-b8a0-3bcb28e4982a.png)
